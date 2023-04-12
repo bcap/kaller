@@ -13,6 +13,7 @@ import (
 const HeaderPlan = "X-caller-plan"
 const HeaderLocation = "X-caller-loc"
 const HeaderPlanEncoding = "X-caller-plan-encoding"
+const HeaderRequestTrace = "X-caller-request-trace"
 
 func WritePlanHeaders(req *http.Request, plan ptype.Plan, location string) error {
 	encodedPlan, encoding, err := EncodePlan(plan)
@@ -76,4 +77,12 @@ func DecodePlan(encodedPlan string, encoding string) (ptype.Plan, error) {
 	}
 
 	return ptype.Plan{}, fmt.Errorf("invalid encoding %s", encoding)
+}
+
+func WriteRequestTraceHeader(req *http.Request, requestIDs string) {
+	req.Header.Set(HeaderRequestTrace, requestIDs)
+}
+
+func ReadRequestTraceHeader(req *http.Request) string {
+	return req.Header.Get(HeaderRequestTrace)
 }

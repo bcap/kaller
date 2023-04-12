@@ -10,7 +10,7 @@ import (
 	"github.com/bcap/caller/random"
 )
 
-var delayRand = rand.New(rand.NewSource(time.Now().UnixMicro()))
+var delayRand = rand.New(rand.NewSource(time.Now().UnixNano()))
 
 func (h *handler) delay(delay ptype.Delay) error {
 	if delay.IsZero() {
@@ -23,7 +23,7 @@ func (h *handler) delay(delay ptype.Delay) error {
 	}
 	select {
 	case <-time.After(sleep):
-	case <-h.Request.Context().Done():
+	case <-h.Context.Done():
 	}
 	return nil
 }
@@ -40,7 +40,7 @@ func (h *handler) call(call ptype.Call, location string) error {
 		body = &bytes.Buffer{}
 	}
 	req, err := http.NewRequestWithContext(
-		h.Request.Context(), call.HTTP.Method, call.HTTP.URL.String(), body,
+		h.Context, call.HTTP.Method, call.HTTP.URL.String(), body,
 	)
 	if err != nil {
 		return err
@@ -51,6 +51,7 @@ func (h *handler) call(call ptype.Call, location string) error {
 	if err := WritePlanHeaders(req, h.Plan, location); err != nil {
 		return err
 	}
+	WriteRequestTraceHeader(req, h.RequestID)
 	_, err = client.Do(req)
 	return err
 }

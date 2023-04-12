@@ -91,6 +91,10 @@ execution:
           Content-Type: text/plain
       delay: 53ms to 203ms
   - delay: 10ms to 20ms                                    # 1_3
+  post-execution:
+  - call:
+    http: POST service5/metrics 201 2048 200               # 1_4
+    delay: 10ms to 20ms
 - delay:                                                   # 2
   min: 150ms
   max: 250ms
@@ -237,6 +241,22 @@ func TestDecodeYAMLExample1(t *testing.T) {
 	assert.Equal(t,
 		&Delay{Min: 10 * time.Millisecond, Max: 20 * time.Millisecond},
 		delay_1_3,
+	)
+
+	call_1_4 := call_1.PostExecution[0].(*Call)
+	assert.Equal(t,
+		HTTP{
+			Method:          "POST",
+			URL:             MustParseURL("service5/metrics"),
+			StatusCode:      201,
+			GenRequestBody:  2048,
+			GenResponseBody: 200,
+		},
+		call_1_4.HTTP,
+	)
+	assert.Equal(t,
+		Delay{Min: 10 * time.Millisecond, Max: 20 * time.Millisecond},
+		call_1_4.Delay,
 	)
 
 	delay_2 := execution[2].(*Delay)

@@ -6,9 +6,10 @@ import (
 	"time"
 )
 
-func (h *handler) logEntry() {
+func (h *handler) logRequestIn() {
 	msg := fmt.Sprintf(
-		"> %s %s %s %d",
+		"%s > %s %s %s %d",
+		h.RequestID,
 		h.Request.RemoteAddr,
 		h.Request.Method,
 		h.Request.URL,
@@ -18,9 +19,10 @@ func (h *handler) logEntry() {
 	h.addTestAccessLogEntry(msg)
 }
 
-func (h *handler) logErr(err error) {
+func (h *handler) logResponseWriteErr(err error) {
 	msg := fmt.Sprintf(
-		"!! failed to send response to %s %s %s -> %v",
+		"%s !! failed to send response to %s %s %s -> %v",
+		h.RequestID,
 		h.Request.RemoteAddr,
 		h.Request.Method,
 		h.Request.URL,
@@ -30,16 +32,31 @@ func (h *handler) logErr(err error) {
 	h.addTestAccessLogEntry(msg)
 }
 
-func (h *handler) logExit() {
-	timeTaken := time.Since(h.Start)
+func (h *handler) logResponseOut() {
+	timeTaken := time.Since(h.RequestedAt)
 	msg := fmt.Sprintf(
-		"< %s %s %s %d -> %d %d in %v",
+		"%s < %s %s %s %d -> %d %d in %v",
+		h.RequestID,
 		h.Request.RemoteAddr,
 		h.Request.Method,
 		h.Request.URL,
 		len(h.RequestBody),
 		h.ResponseStatusCode,
 		len(h.ResponseBody),
+		timeTaken,
+	)
+	log.Println(msg)
+	h.addTestAccessLogEntry(msg)
+}
+
+func (h *handler) logPostResponseOut() {
+	timeTaken := time.Since(h.RespondedAt)
+	msg := fmt.Sprintf(
+		"%s p %s %s %s in %v",
+		h.RequestID,
+		h.Request.RemoteAddr,
+		h.Request.Method,
+		h.Request.URL,
 		timeTaken,
 	)
 	log.Println(msg)

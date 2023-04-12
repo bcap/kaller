@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"log"
@@ -10,9 +11,10 @@ import (
 	"sync"
 	"time"
 
+	"golang.org/x/sync/errgroup"
+
 	ptype "github.com/bcap/caller/plan"
 	"github.com/bcap/caller/random"
-	"golang.org/x/sync/errgroup"
 )
 
 type Handler struct {
@@ -22,14 +24,12 @@ type Handler struct {
 	testAccessLogMutex   sync.Mutex
 }
 
-func (h *Handler) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
-	handler := handler{Handler: h, Request: req, Response: resp}
-	handler.Handle()
-}
-
 type handler struct {
 	*Handler
 
+	Context context.Context
+
+	RequestID   string
 	Request     *http.Request
 	RequestBody []byte
 
@@ -37,12 +37,23 @@ type handler struct {
 	ResponseStatusCode int
 	ResponseBody       []byte
 
-	Plan  ptype.Plan
-	Start time.Time
+	Plan        ptype.Plan
+	RequestedAt time.Time
+	RespondedAt time.Time
+}
+
+func (h *Handler) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
+	handler := handler{
+		Handler:  h,
+		Request:  req,
+		Response: resp,
+	}
+	handler.Handle()
 }
 
 func (h *handler) Handle() {
-	h.Start = time.Now()
+	h.RequestedAt = time.Now()
+	h.Context = h.Request.Context()
 
 	reqBodyBytes, err := io.ReadAll(h.Request.Body)
 	if err != nil {
@@ -50,8 +61,9 @@ func (h *handler) Handle() {
 		return
 	}
 	h.RequestBody = reqBodyBytes
+	h.identifyRequest()
 
-	h.logEntry()
+	h.logRequestIn()
 
 	plan, location, err := ReadPlanHeaders(h.Request)
 	if err != nil {
@@ -72,33 +84,52 @@ func (h *handler) Handle() {
 	}
 
 	h.delay(call.Delay)
-	err = h.processSteps(1, call.Execution, location)
+	err = h.processSteps(1, 0, call.Execution, location)
 	if err != nil {
 		h.textResponse(500, "execution failure: %v", err)
 	}
 
 	statusCode, respBodyBytes, err := h.respond(call)
 	if err != nil {
-		h.logErr(err)
+		h.logResponseWriteErr(err)
 		return
 	}
 
 	h.ResponseStatusCode = statusCode
 	h.ResponseBody = respBodyBytes
-	h.logExit()
+	h.logResponseOut()
+
+	//
+	// post execution phase (what to run after the response was sent)
+	//
+
+	if len(call.PostExecution) == 0 {
+		return
+	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	h.Context = ctx
+
+	err = h.processSteps(1, len(call.Execution), call.PostExecution, location)
+	if err != nil {
+		h.textResponse(500, "execution failure: %v", err)
+	}
+
+	h.logPostResponseOut()
 }
 
-func (h *handler) processSteps(concurrency int, execution ptype.Execution, location string) error {
+func (h *handler) processSteps(concurrency int, stepIdxOffset int, execution ptype.Execution, location string) error {
 	if concurrency == 1 {
 		for stepIdx, step := range execution {
-			if err := h.processStep(stepIdx, step, location); err != nil {
+			if err := h.processStep(stepIdxOffset+stepIdx, step, location); err != nil {
 				return err
 			}
 		}
 		return nil
 	}
 
-	group, ctx := errgroup.WithContext(h.Request.Context())
+	group, ctx := errgroup.WithContext(h.Context)
 	stepsC := make(chan int)
 	for i := 0; i < concurrency; i++ {
 		group.Go(func() error {
@@ -110,7 +141,7 @@ func (h *handler) processSteps(concurrency int, execution ptype.Execution, locat
 					if !ok {
 						return nil
 					}
-					if err := h.processStep(stepIdx, execution[stepIdx], location); err != nil {
+					if err := h.processStep(stepIdxOffset+stepIdx, execution[stepIdx], location); err != nil {
 						return err
 					}
 				}
@@ -140,7 +171,7 @@ func (h *handler) processStep(stepIdx int, step ptype.Step, location string) err
 	case *ptype.Call:
 		err = h.call(*v, nextLocation())
 	case *ptype.Parallel:
-		err = h.processSteps(v.Concurrency, v.Execution, nextLocation())
+		err = h.processSteps(v.Concurrency, 0, v.Execution, nextLocation())
 	default:
 		return fmt.Errorf("unrecognized step type %T", step)
 	}
@@ -165,6 +196,7 @@ func (h *handler) respond(call *ptype.Call) (int, []byte, error) {
 		body = []byte{}
 	}
 	_, err := h.Response.Write(body)
+	h.RespondedAt = time.Now()
 	return statusCode, body, err
 }
 
@@ -176,6 +208,16 @@ func (h *handler) textResponse(statusCode int, msg string, args ...any) {
 	h.Response.Header().Set("Content-type", "text/plain")
 	h.Response.WriteHeader(statusCode)
 	h.Response.Write([]byte(msg))
+}
+
+func (h *handler) identifyRequest() {
+	h.RequestID = ReadRequestTraceHeader(h.Request)
+	newID := random.RandString(3)
+	if h.RequestID == "" {
+		h.RequestID = newID
+	} else {
+		h.RequestID = h.RequestID + "." + newID
+	}
 }
 
 func locateInPlan(plan ptype.Plan, location string) (ptype.Step, error) {
@@ -191,10 +233,13 @@ func locateInPlan(plan ptype.Plan, location string) (ptype.Step, error) {
 		}
 		switch v := step.(type) {
 		case *ptype.Call:
-			step = v.Execution[stepIdx]
+			if stepIdx < len(v.Execution) {
+				step = v.Execution[stepIdx]
+			} else {
+				step = v.PostExecution[stepIdx-len(v.Execution)]
+			}
 		case *ptype.Parallel:
 			step = v.Execution[stepIdx]
-
 		default:
 			return nil, fmt.Errorf("bad location %s: step #%d is of unrecognized type %T", location, idx, v)
 		}

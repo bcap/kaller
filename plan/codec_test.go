@@ -71,9 +71,13 @@ execution:
     - call:                                                # 1_2_1
       http: GET service2/product?id=2 200 0 1024
       delay: 51ms to 201ms
-    - call:                                                # 1_2_2
-      http: GET service2/product?id=3 502 0 1024
-      delay: 52ms to 202ms
+    - loop:                                                # 1_2_2
+      times: 2
+      delay: 10ms
+      execution:
+      - call:                                              # 1_2_2_0
+        http: GET service2/product?id=3 502 0 1024
+        delay: 52ms to 202ms
     - delay:                                               # 1_2_3
       min: 1s
     - call:                                                # 1_2_4
@@ -191,7 +195,14 @@ func TestDecodeYAMLExample1(t *testing.T) {
 		call_1_2_1.Delay,
 	)
 
-	call_1_2_2 := parallel_1_2.Execution[2].(*Call)
+	loop_1_2_2 := parallel_1_2.Execution[2].(*Loop)
+	assert.Equal(t, 2, loop_1_2_2.Times)
+	assert.Equal(t,
+		Delay{Min: 10 * time.Millisecond, Max: 10 * time.Millisecond},
+		loop_1_2_2.Delay,
+	)
+
+	call_1_2_2_0 := loop_1_2_2.Execution[0].(*Call)
 	assert.Equal(t,
 		HTTP{
 			Method:          "GET",
@@ -200,11 +211,11 @@ func TestDecodeYAMLExample1(t *testing.T) {
 			GenRequestBody:  0,
 			GenResponseBody: 1024,
 		},
-		call_1_2_2.HTTP,
+		call_1_2_2_0.HTTP,
 	)
 	assert.Equal(t,
 		Delay{Min: 52 * time.Millisecond, Max: 202 * time.Millisecond},
-		call_1_2_2.Delay,
+		call_1_2_2_0.Delay,
 	)
 
 	delay_1_2_3 := parallel_1_2.Execution[3].(*Delay)

@@ -54,9 +54,13 @@ execution:
     - call:
       http: GET {{addr}}/service2/product?id=1 200 0 1024
       delay: 500ms
-    - call:
-      http: GET {{addr}}/service2/product?id=2 404 0 1024
-      delay: 50ms
+    - loop:
+      times: 3
+      delay: 20ms
+      execution:
+      - call:
+        http: GET {{addr}}/service2/product?id=2 404 0 1024
+        delay: 50ms
     - call:
       http: GET {{addr}}/service2/product?id=3 200 0 1024
       delay: 500ms

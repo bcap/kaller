@@ -19,6 +19,7 @@ const (
 	CallType     StepType = "call"
 	DelayType    StepType = "delay"
 	ParallelType StepType = "parallel"
+	LoopType     StepType = "loop"
 )
 
 func (e Execution) MarshalYAML() (interface{}, error) {
@@ -40,6 +41,8 @@ func (e *Execution) UnmarshalYAML(node *yaml.Node) error {
 			step = &Call{}
 		case ParallelType:
 			step = &Parallel{}
+		case LoopType:
+			step = &Loop{}
 		default:
 			return fmt.Errorf("unrecognized step type %q in line %d", stepType, node.Line)
 		}
@@ -90,6 +93,8 @@ func (e *Execution) UnmarshalJSON(data []byte) error {
 				step = &Call{}
 			case ParallelType:
 				step = &Parallel{}
+			case LoopType:
+				step = &Loop{}
 			default:
 				return fmt.Errorf("unrecognized step type %q", stepType)
 			}

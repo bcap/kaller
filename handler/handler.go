@@ -172,6 +172,8 @@ func (h *handler) processStep(stepIdx int, step ptype.Step, location string) err
 		err = h.call(*v, nextLocation())
 	case *ptype.Parallel:
 		err = h.processSteps(v.Concurrency, 0, v.Execution, nextLocation())
+	case *ptype.Loop:
+		err = h.loop(*v, nextLocation())
 	default:
 		return fmt.Errorf("unrecognized step type %T", step)
 	}
@@ -239,6 +241,8 @@ func locateInPlan(plan ptype.Plan, location string) (ptype.Step, error) {
 				step = v.PostExecution[stepIdx-len(v.Execution)]
 			}
 		case *ptype.Parallel:
+			step = v.Execution[stepIdx]
+		case *ptype.Loop:
 			step = v.Execution[stepIdx]
 		default:
 			return nil, fmt.Errorf("bad location %s: step #%d is of unrecognized type %T", location, idx, v)

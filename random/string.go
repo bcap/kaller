@@ -36,15 +36,3 @@ func RandString(n int) string {
 	}
 	return *(*string)(unsafe.Pointer(&b))
 }
-
-func StringFrequency(str string) map[rune]float64 {
-	frequency := make(map[rune]float64)
-	for _, rn := range str {
-		frequency[rn]++
-	}
-	len := float64(len(str))
-	for rn, count := range frequency {
-		frequency[rn] = count / len
-	}
-	return frequency
-}

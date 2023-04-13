@@ -10,6 +10,20 @@ import (
 	"github.com/bcap/caller/random"
 )
 
+func (h *handler) parallel(parallel ptype.Parallel, location string) error {
+	return h.processSteps(parallel.Concurrency, 0, parallel.Execution, location)
+}
+
+func (h *handler) loop(loop ptype.Loop, location string) error {
+	for i := 0; i < loop.Times; i++ {
+		if err := h.processSteps(1, 0, loop.Execution, location); err != nil {
+			return err
+		}
+		h.delay(loop.Delay)
+	}
+	return nil
+}
+
 var delayRand = rand.New(rand.NewSource(time.Now().UnixNano()))
 
 func (h *handler) delay(delay ptype.Delay) error {
@@ -54,14 +68,4 @@ func (h *handler) call(call ptype.Call, location string) error {
 	WriteRequestTraceHeader(req, h.RequestID)
 	_, err = client.Do(req)
 	return err
-}
-
-func (h *handler) loop(loop ptype.Loop, location string) error {
-	for i := 0; i < loop.Times; i++ {
-		if err := h.processSteps(1, 0, loop.Execution, location); err != nil {
-			return err
-		}
-		h.delay(loop.Delay)
-	}
-	return nil
 }

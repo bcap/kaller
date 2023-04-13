@@ -11,8 +11,6 @@ import (
 	"sync"
 	"time"
 
-	"golang.org/x/sync/errgroup"
-
 	ptype "github.com/bcap/caller/plan"
 	"github.com/bcap/caller/random"
 )
@@ -100,7 +98,7 @@ func (h *handler) Handle() {
 	h.logResponseOut()
 
 	//
-	// post execution phase (what to run after the response was sent)
+	// post execution phase (executed after the response was sent)
 	//
 
 	if len(call.PostExecution) == 0 {
@@ -117,70 +115,6 @@ func (h *handler) Handle() {
 	}
 
 	h.logPostResponseOut()
-}
-
-func (h *handler) processSteps(concurrency int, stepIdxOffset int, execution ptype.Execution, location string) error {
-	if concurrency == 1 {
-		for stepIdx, step := range execution {
-			if err := h.processStep(stepIdxOffset+stepIdx, step, location); err != nil {
-				return err
-			}
-		}
-		return nil
-	}
-
-	group, ctx := errgroup.WithContext(h.Context)
-	stepsC := make(chan int)
-	for i := 0; i < concurrency; i++ {
-		group.Go(func() error {
-			for {
-				select {
-				case <-ctx.Done():
-					return nil
-				case stepIdx, ok := <-stepsC:
-					if !ok {
-						return nil
-					}
-					if err := h.processStep(stepIdxOffset+stepIdx, execution[stepIdx], location); err != nil {
-						return err
-					}
-				}
-			}
-		})
-	}
-	for i := 0; i < len(execution); i++ {
-		stepsC <- i
-	}
-	close(stepsC)
-	return group.Wait()
-}
-
-func (h *handler) processStep(stepIdx int, step ptype.Step, location string) error {
-	nextLocation := func() string {
-		stepIdxStr := strconv.Itoa(stepIdx)
-		if location == "" {
-			return stepIdxStr
-		}
-		return location + "." + stepIdxStr
-	}
-
-	var err error
-	switch v := step.(type) {
-	case *ptype.Delay:
-		err = h.delay(*v)
-	case *ptype.Call:
-		err = h.call(*v, nextLocation())
-	case *ptype.Parallel:
-		err = h.processSteps(v.Concurrency, 0, v.Execution, nextLocation())
-	case *ptype.Loop:
-		err = h.loop(*v, nextLocation())
-	default:
-		return fmt.Errorf("unrecognized step type %T", step)
-	}
-	if err != nil {
-		return fmt.Errorf("failed at step %d: %w", stepIdx, err)
-	}
-	return nil
 }
 
 func (h *handler) respond(call *ptype.Call) (int, []byte, error) {
@@ -210,6 +144,7 @@ func (h *handler) textResponse(statusCode int, msg string, args ...any) {
 	h.Response.Header().Set("Content-type", "text/plain")
 	h.Response.WriteHeader(statusCode)
 	h.Response.Write([]byte(msg))
+	h.RespondedAt = time.Now()
 }
 
 func (h *handler) identifyRequest() {

@@ -37,9 +37,9 @@ func TestHandlerPlan1(t *testing.T) {
 
 	// assert the access log
 	accessLog := server.Handler.(*Handler).testAccessLog
-	assertInLog(t, accessLog, "GET / 0 -> 200 0")
-	assertInLog(t, accessLog, "GET /service2 0 -> 200 1024")
-	assertInLog(t, accessLog, "POST /service3 1024 -> 200 10240")
+	assertInLog(t, accessLog, "GET / 0 -> 200 0", 1)
+	assertInLog(t, accessLog, "GET /service2 0 -> 200 1024", 1)
+	assertInLog(t, accessLog, "POST /service3 1024 -> 200 10240", 1)
 }
 
 var plan2 = `
@@ -82,22 +82,27 @@ func TestHandlerPlan2(t *testing.T) {
 
 	// assert the access log
 	accessLog := server.Handler.(*Handler).testAccessLog
-	assertInLog(t, accessLog, "GET / 0 -> 200 0")
-	assertInLog(t, accessLog, "GET /service1/listing 0 -> 200 10240")
-	assertInLog(t, accessLog, "GET /service2/product?id=1 0 -> 200 1024")
-	assertInLog(t, accessLog, "GET /service2/product?id=2 0 -> 404 1024")
-	assertInLog(t, accessLog, "GET /service2/product?id=3 0 -> 200 1024")
-	assertInLog(t, accessLog, "GET /service2/product?id=4 0 -> 200 1024")
-	assertInLog(t, accessLog, "POST /service3/metrics 1024 -> 200 10240")
+	assertInLog(t, accessLog, "GET / 0 -> 200 0", 1)
+	assertInLog(t, accessLog, "GET /service1/listing 0 -> 200 10240", 1)
+	assertInLog(t, accessLog, "GET /service2/product?id=1 0 -> 200 1024", 1)
+	assertInLog(t, accessLog, "GET /service2/product?id=2 0 -> 404 1024", 3)
+	assertInLog(t, accessLog, "GET /service2/product?id=3 0 -> 200 1024", 1)
+	assertInLog(t, accessLog, "GET /service2/product?id=4 0 -> 200 1024", 1)
+	assertInLog(t, accessLog, "POST /service3/metrics 1024 -> 200 10240", 1)
 }
 
-func assertInLog(t *testing.T, accessLog []string, msg string) {
+func assertInLog(t *testing.T, accessLog []string, msg string, times int) {
+	found := 0
 	for _, entry := range accessLog {
 		if strings.Contains(entry, msg) {
-			return
+			found++
 		}
 	}
-	assert.Fail(t, "access log does not contain entry for %q", msg)
+	assert.Equal(
+		t, times, found,
+		"access log should have %d entries for %q, but has %d instead",
+		times, msg, found,
+	)
 }
 
 //

@@ -61,14 +61,14 @@ func (h *handler) Handle() {
 	h.RequestBody = reqBodyBytes
 	h.identifyRequest()
 
-	h.logRequestIn()
-
 	plan, location, err := ReadPlanHeaders(h.Request)
 	if err != nil {
 		h.textResponse(400, "bad plan: %v", err)
 		return
 	}
 	h.Plan = plan
+
+	h.logRequestIn(location)
 
 	step, err := locateInPlan(plan, location)
 	if err != nil {
@@ -89,13 +89,13 @@ func (h *handler) Handle() {
 
 	statusCode, respBodyBytes, err := h.respond(call)
 	if err != nil {
-		h.logResponseWriteErr(err)
+		h.logResponseWriteErr(location, err)
 		return
 	}
 
 	h.ResponseStatusCode = statusCode
 	h.ResponseBody = respBodyBytes
-	h.logResponseOut()
+	h.logResponseOut(location)
 
 	//
 	// post execution phase (executed after the response was sent)
@@ -114,7 +114,7 @@ func (h *handler) Handle() {
 		h.textResponse(500, "execution failure: %v", err)
 	}
 
-	h.logPostResponseOut()
+	h.logPostResponseOut(location)
 }
 
 func (h *handler) respond(call *ptype.Call) (int, []byte, error) {

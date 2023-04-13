@@ -45,6 +45,9 @@ func TestHandlerPlan1(t *testing.T) {
 var plan2 = `
 execution:
 - call:
+  http: POST {{addr}}/service4/login 200 1024 2048
+  delay: 100ms to 200ms
+- call:
   http: GET {{addr}}/service1/listing 200 0 10240
   execution:
   - delay: 100ms to 200ms

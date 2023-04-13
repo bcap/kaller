@@ -48,7 +48,7 @@ func (h *handler) call(call ptype.Call, location string) error {
 	if call.HTTP.RequestBody != "" {
 		body = bytes.NewBufferString(call.HTTP.RequestBody)
 	} else if call.HTTP.GenRequestBody > 0 {
-		str := random.RandString(call.HTTP.GenRequestBody)
+		str := random.String(call.HTTP.GenRequestBody)
 		body = bytes.NewBufferString(str)
 	} else {
 		body = &bytes.Buffer{}

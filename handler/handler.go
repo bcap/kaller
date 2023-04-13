@@ -40,6 +40,7 @@ type handler struct {
 	RespondedAt time.Time
 }
 
+// Main HTTP handler
 func (h *Handler) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
 	handler := handler{
 		Handler:  h,
@@ -127,7 +128,7 @@ func (h *handler) respond(call *ptype.Call) (int, []byte, error) {
 	if call.HTTP.ResponseBody != "" {
 		body = []byte(call.HTTP.ResponseBody)
 	} else if call.HTTP.GenResponseBody > 0 {
-		body = []byte(random.RandString(call.HTTP.GenResponseBody))
+		body = []byte(random.String(call.HTTP.GenResponseBody))
 	} else {
 		body = []byte{}
 	}
@@ -149,7 +150,7 @@ func (h *handler) textResponse(statusCode int, msg string, args ...any) {
 
 func (h *handler) identifyRequest() {
 	h.RequestID = ReadRequestTraceHeader(h.Request)
-	newID := random.RandString(3)
+	newID := random.String(3)
 	if h.RequestID == "" {
 		h.RequestID = newID
 	} else {

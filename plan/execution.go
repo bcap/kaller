@@ -7,8 +7,11 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+// Execution is simply an ordered list of steps
 type Execution []Step
 
+// Step is an item in an execution list
+// Check the StepType enum values for types of steps
 type Step interface {
 	Type() StepType
 }
@@ -48,20 +51,21 @@ func (e *Execution) UnmarshalYAML(node *yaml.Node) error {
 		}
 
 		if len(node.Content) > 2 && node.Content[1].Tag == "!!null" {
-			// object is inline, example:
-			// execution:
-			// - call:
-			//   http: GET something 200
-			//   delay: 10ms
+			// node has both step type and content as a single node, where the step type
+			// is actually a key with null value. Example:
+			//   execution:
+			//   - call:
+			//     http: GET something 200
+			//     delay: 10ms
 			if err := node.Decode(step); err != nil {
 				return err
 			}
 		} else {
-			// object is nested, example:
-			// execution:
-			// - call:
-			//     http: GET something 200
-			//     delay: 10ms
+			// node has nesting, with type being parent of the content. Example:
+			//   execution:
+			//   - call:
+			//       http: GET something 200
+			//       delay: 10ms
 			if err := node.Content[1].Decode(step); err != nil {
 				return err
 			}

@@ -7,6 +7,8 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+// The URL type is in essence the same as net/url.URL, but with some facilities for
+// cleaner json and yaml serialization/deserialization
 type URL struct {
 	*url.URL
 }

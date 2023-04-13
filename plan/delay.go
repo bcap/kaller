@@ -8,6 +8,12 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+// Delay represents that the service should spend some time before moving to the next step
+// The delay can operate in 2 different ways:
+//   - A fixed amount of time if only Min is defined, or if both Min and Max have the same value
+//   - A random time between Min and Max
+//
+// TODO: implement delay strategies like: sleep vs cpu burn
 type Delay struct {
 	Min time.Duration `json:"min" yaml:"min"`
 	Max time.Duration `json:"max" yaml:"max"`
@@ -28,8 +34,17 @@ func (d Delay) IsZero() bool {
 	return d.Min == 0 && d.Max == 0
 }
 
-var delayPattern = regexp.MustCompile(`(\w+)(?:\s+to\s+(\w+))?`)
+const DelayPattern = `` +
+	// Min
+	`(\w+)` +
+	// Optional Max
+	`(?:\s+to\s+(\w+))?`
 
+var delayPattern = regexp.MustCompile(DelayPattern)
+
+// Constructs a Delay from a simple string. Examples:
+//   - "10ms" creates a Delay with both Min and Max at 10ms
+//   - "10ms to 200ms" creates a Delay with Min set to 10ms and Max set to 200ms
 func (d *Delay) Parse(s string) error {
 	parts := delayPattern.FindStringSubmatch(s)
 	if parts == nil {

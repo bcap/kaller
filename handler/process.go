@@ -18,6 +18,9 @@ func (h *handler) processSteps(concurrency int, stepIdxOffset int, execution pty
 		return nil
 	}
 
+	if concurrency <= 0 {
+		concurrency = len(execution)
+	}
 	group, ctx := errgroup.WithContext(h.Context)
 	stepsC := make(chan int)
 	for i := 0; i < concurrency; i++ {

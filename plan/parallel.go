@@ -9,6 +9,6 @@ type Parallel struct {
 	Execution   Execution `json:"execution" yaml:"execution"`
 }
 
-func (Parallel) Type() StepType {
-	return ParallelType
+func (Parallel) StepType() StepType {
+	return StepTypeParallel
 }

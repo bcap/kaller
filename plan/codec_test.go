@@ -69,6 +69,7 @@ execution:
       http: GET service2/product?id=1 200 0 1024
       delay: 50ms to 200ms
     - call:                                                # 1_2_1
+      async: true
       http: GET service2/product?id=2 200 0 1024
       delay: 51ms to 201ms
     - loop:                                                # 1_2_2
@@ -144,6 +145,7 @@ func TestDecodeYAMLExample1(t *testing.T) {
 	)
 
 	call_1_1 := call_1.Execution[1].(*Call)
+	assert.Equal(t, call_1_1.Async, false)
 	assert.Equal(t,
 		HTTP{
 			Method:          "GET",
@@ -164,6 +166,7 @@ func TestDecodeYAMLExample1(t *testing.T) {
 	assert.Equal(t, 5, len(parallel_1_2.Execution))
 
 	call_1_2_0 := parallel_1_2.Execution[0].(*Call)
+	assert.Equal(t, call_1_2_0.Async, false)
 	assert.Equal(t,
 		HTTP{
 			Method:          "GET",
@@ -180,6 +183,7 @@ func TestDecodeYAMLExample1(t *testing.T) {
 	)
 
 	call_1_2_1 := parallel_1_2.Execution[1].(*Call)
+	assert.Equal(t, call_1_2_1.Async, true)
 	assert.Equal(t,
 		HTTP{
 			Method:          "GET",
@@ -203,6 +207,7 @@ func TestDecodeYAMLExample1(t *testing.T) {
 	)
 
 	call_1_2_2_0 := loop_1_2_2.Execution[0].(*Call)
+	assert.Equal(t, call_1_2_2_0.Async, false)
 	assert.Equal(t,
 		HTTP{
 			Method:          "GET",
@@ -225,6 +230,7 @@ func TestDecodeYAMLExample1(t *testing.T) {
 	)
 
 	call_1_2_4 := parallel_1_2.Execution[4].(*Call)
+	assert.Equal(t, call_1_2_4.Async, false)
 	assert.Equal(t,
 		HTTP{
 			Method:          "GET",
@@ -255,6 +261,7 @@ func TestDecodeYAMLExample1(t *testing.T) {
 	)
 
 	call_1_4 := call_1.PostExecution[0].(*Call)
+	assert.Equal(t, call_1_4.Async, false)
 	assert.Equal(t,
 		HTTP{
 			Method:          "POST",

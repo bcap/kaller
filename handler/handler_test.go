@@ -29,14 +29,14 @@ execution:
 `
 
 func TestHandlerPlan1(t *testing.T) {
-	ctx, cancel, server, addr := launchServer(t)
+	ctx, cancel, handler, addr := launchServer(t)
 	defer cancel()
 
-	execPlan(t, ctx, addr, plan1)
+	execPlan(t, ctx, handler, addr, plan1)
 	time.Sleep(300 * time.Millisecond)
 
 	// assert the access log
-	accessLog := server.Handler.(*Handler).testAccessLog
+	accessLog := handler.testAccessLog
 	assertInLog(t, accessLog, "GET / 0 -> 200 0", 1)
 	assertInLog(t, accessLog, "GET /service2 0 -> 200 1024", 1)
 	assertInLog(t, accessLog, "POST /service3 1024 -> 200 10240", 1)
@@ -70,6 +70,10 @@ execution:
     - call:
       http: GET {{addr}}/service2/product?id=4 200 0 1024
       delay: 500ms
+    - call:
+      async: true
+      http: POST {{addr}}/service4/viewed 200 1024 2048
+      delay: 2000ms
   post-execution:
   - call:
     http: POST {{addr}}/service3/metrics 200 1024 10240
@@ -77,14 +81,13 @@ execution:
 `
 
 func TestHandlerPlan2(t *testing.T) {
-	ctx, cancel, server, addr := launchServer(t)
+	ctx, cancel, handler, addr := launchServer(t)
 	defer cancel()
 
-	execPlan(t, ctx, addr, plan2)
-	time.Sleep(300 * time.Millisecond)
+	execPlan(t, ctx, handler, addr, plan2)
 
 	// assert the access log
-	accessLog := server.Handler.(*Handler).testAccessLog
+	accessLog := handler.testAccessLog
 	assertInLog(t, accessLog, "GET / 0 -> 200 0", 1)
 	assertInLog(t, accessLog, "GET /service1/listing 0 -> 200 10240", 1)
 	assertInLog(t, accessLog, "GET /service2/product?id=1 0 -> 200 1024", 1)
@@ -112,10 +115,11 @@ func assertInLog(t *testing.T, accessLog []string, msg string, times int) {
 // Helper functions
 //
 
-func launchServer(t *testing.T) (context.Context, context.CancelFunc, *http.Server, *net.TCPAddr) {
+func launchServer(t *testing.T) (context.Context, context.CancelFunc, *Handler, *net.TCPAddr) {
 	ctx, cancel := context.WithCancel(context.Background())
+	handler := Handler{testCaptureAccessLog: true}
 	server := http.Server{
-		Handler:     &Handler{testCaptureAccessLog: true},
+		Handler:     &handler,
 		BaseContext: func(net.Listener) context.Context { return ctx },
 	}
 
@@ -132,10 +136,10 @@ func launchServer(t *testing.T) (context.Context, context.CancelFunc, *http.Serv
 		server.Shutdown(shutdownCtx)
 	}()
 
-	return ctx, cancel, &server, listener.Addr().(*net.TCPAddr)
+	return ctx, cancel, &handler, listener.Addr().(*net.TCPAddr)
 }
 
-func execPlan(t *testing.T, ctx context.Context, addr *net.TCPAddr, planString string) {
+func execPlan(t *testing.T, ctx context.Context, handler *Handler, addr *net.TCPAddr, planString string) {
 	request, err := http.NewRequestWithContext(ctx, "GET", "http://"+addr.AddrPort().String(), nil)
 	require.NoError(t, err)
 
@@ -146,6 +150,8 @@ func execPlan(t *testing.T, ctx context.Context, addr *net.TCPAddr, planString s
 	client := http.Client{}
 	_, err = client.Do(request)
 	require.NoError(t, err)
+
+	waitRequestsHandled(handler)
 }
 
 func preparePlan(t *testing.T, planStr string, addr *net.TCPAddr) ptype.Plan {
@@ -153,4 +159,10 @@ func preparePlan(t *testing.T, planStr string, addr *net.TCPAddr) ptype.Plan {
 	plan, err := ptype.FromYAML([]byte(planStr))
 	require.NoError(t, err)
 	return plan
+}
+
+func waitRequestsHandled(handler *Handler) {
+	for handler.Outstanding() > 0 {
+		time.Sleep(10 * time.Millisecond)
+	}
 }

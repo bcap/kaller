@@ -8,6 +8,6 @@ type Loop struct {
 	Execution Execution `json:"execution,omitempty" yaml:"execution,omitempty"`
 }
 
-func (Loop) Type() StepType {
-	return LoopType
+func (Loop) StepType() StepType {
+	return StepTypeLoop
 }

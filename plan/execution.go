@@ -10,21 +10,6 @@ import (
 // Execution is simply an ordered list of steps
 type Execution []Step
 
-// Step is an item in an execution list
-// Check the StepType enum values for types of steps
-type Step interface {
-	Type() StepType
-}
-
-type StepType string
-
-const (
-	CallType     StepType = "call"
-	DelayType    StepType = "delay"
-	ParallelType StepType = "parallel"
-	LoopType     StepType = "loop"
-)
-
 func (e Execution) MarshalYAML() (interface{}, error) {
 	return e.toMarshallable(), nil
 }
@@ -38,13 +23,13 @@ func (e *Execution) UnmarshalYAML(node *yaml.Node) error {
 		var step Step
 		stepType := StepType(node.Content[0].Value)
 		switch stepType {
-		case DelayType:
+		case StepTypeDelay:
 			step = &Delay{}
-		case CallType:
+		case StepTypeCall:
 			step = &Call{}
-		case ParallelType:
+		case StepTypeParallel:
 			step = &Parallel{}
-		case LoopType:
+		case StepTypeLoop:
 			step = &Loop{}
 		default:
 			return fmt.Errorf("unrecognized step type %q in line %d", stepType, node.Line)
@@ -91,13 +76,13 @@ func (e *Execution) UnmarshalJSON(data []byte) error {
 			var step Step
 			stepType := StepType(stepType)
 			switch stepType {
-			case DelayType:
+			case StepTypeDelay:
 				step = &Delay{}
-			case CallType:
+			case StepTypeCall:
 				step = &Call{}
-			case ParallelType:
+			case StepTypeParallel:
 				step = &Parallel{}
-			case LoopType:
+			case StepTypeLoop:
 				step = &Loop{}
 			default:
 				return fmt.Errorf("unrecognized step type %q", stepType)
@@ -118,7 +103,7 @@ func (e Execution) toMarshallable() any {
 	}
 	rawExecution := make([]map[string]any, len(e))
 	for idx, step := range e {
-		rawExecution[idx] = map[string]any{string(step.Type()): step}
+		rawExecution[idx] = map[string]any{string(step.StepType()): step}
 	}
 	return rawExecution
 }

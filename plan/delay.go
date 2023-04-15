@@ -19,8 +19,8 @@ type Delay struct {
 	Max time.Duration `json:"max" yaml:"max"`
 }
 
-func (Delay) Type() StepType {
-	return DelayType
+func (Delay) StepType() StepType {
+	return StepTypeDelay
 }
 
 func (d *Delay) String() string {
@@ -32,6 +32,19 @@ func (d *Delay) String() string {
 
 func (d Delay) IsZero() bool {
 	return d.Min == 0 && d.Max == 0
+}
+
+func (d Delay) Validate() error {
+	if d.IsZero() {
+		return nil
+	}
+	if d.Min < 0 || d.Max < 0 {
+		return fmt.Errorf("invalid delay: min and/or max are negative (min: %v, max: %v)", d.Min, d.Max)
+	}
+	if d.Min > d.Max && d.Max > 0 {
+		return fmt.Errorf("invalid delay: min is higher than max (min: %v, max: %v)", d.Min, d.Max)
+	}
+	return nil
 }
 
 const DelayPattern = `` +
@@ -73,7 +86,6 @@ func (d *Delay) UnmarshalYAML(node *yaml.Node) error {
 		}
 		return nil
 	}
-	type rawDelay Delay
-	raw := (*rawDelay)(d)
-	return node.Decode(raw)
+	type raw Delay
+	return node.Decode((*raw)(d))
 }

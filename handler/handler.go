@@ -9,13 +9,18 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	ptype "github.com/bcap/caller/plan"
 	"github.com/bcap/caller/random"
+	syncx "github.com/bcap/caller/sync"
 )
 
 type Handler struct {
+	requestsHandled     int64
+	requestsOutstanding int32
+
 	// access log capturing is for unit testing only
 	testCaptureAccessLog bool
 	testAccessLog        []string
@@ -38,6 +43,8 @@ type handler struct {
 	Plan        ptype.Plan
 	RequestedAt time.Time
 	RespondedAt time.Time
+
+	pendingAsyncCalls syncx.WaitGroup
 }
 
 // Main HTTP handler
@@ -47,12 +54,26 @@ func (h *Handler) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
 		Request:  req,
 		Response: resp,
 	}
+	atomic.AddInt32(&h.requestsOutstanding, 1)
 	handler.Handle()
+	atomic.AddInt64(&h.requestsHandled, 1)
+	atomic.AddInt32(&h.requestsOutstanding, -1)
+}
+
+func (h *Handler) Outstanding() int32 {
+	return atomic.LoadInt32(&h.requestsOutstanding)
+}
+
+func (h *Handler) Handled() int64 {
+	return atomic.LoadInt64(&h.requestsHandled)
 }
 
 func (h *handler) Handle() {
 	h.RequestedAt = time.Now()
-	h.Context = h.Request.Context()
+
+	if h.Context == nil {
+		h.Context = context.Background()
+	}
 
 	reqBodyBytes, err := io.ReadAll(h.Request.Body)
 	if err != nil {
@@ -83,6 +104,9 @@ func (h *handler) Handle() {
 	}
 
 	h.delay(call.Delay)
+
+	defer h.waitAsyncCalls()
+
 	err = h.processSteps(1, 0, call.Execution, location)
 	if err != nil {
 		h.textResponse(500, "execution failure: %v", err)
@@ -105,10 +129,6 @@ func (h *handler) Handle() {
 	if len(call.PostExecution) == 0 {
 		return
 	}
-
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-	h.Context = ctx
 
 	err = h.processSteps(1, len(call.Execution), call.PostExecution, location)
 	if err != nil {
@@ -185,4 +205,29 @@ func locateInPlan(plan ptype.Plan, location string) (ptype.Step, error) {
 		}
 	}
 	return step, nil
+}
+
+const AsyncCallWaitReportTime = 10 * time.Second
+
+func (h *handler) waitAsyncCalls() {
+	start := time.Now()
+	done := make(chan struct{})
+	go func() {
+		h.pendingAsyncCalls.Wait()
+		close(done)
+	}()
+	for {
+		select {
+		case <-done:
+			return
+		case <-h.Context.Done():
+			return
+		case <-time.After(AsyncCallWaitReportTime):
+			timeTaken := time.Since(start)
+			log.Printf(
+				"! Waiting on %d async calls for %v and counting",
+				h.pendingAsyncCalls.Current(), timeTaken,
+			)
+		}
+	}
 }

@@ -1,31 +1,31 @@
 execution:
 - delay: 10ms to 20ms
 - call:
-    http: GET service1/listing 200
+    http: GET http://localhost:8080/service1/listing 200
     delay: 100ms to 200ms
     execution:
-    - delay: 1 to 5ms
+    - delay: 10ms to 50ms
     - call:
-        http: GET service3/profile?id=some_user 200
+        http: GET http://localhost:8080/service3/profile?id=some_user 200
     - parallel:
         concurrency: 2
         execution:
         - call:
-            http: GET service2/product?id=1 200
+            http: GET http://localhost:8080/service2/product?id=1 200
             delay: 50ms to 200ms
         - call:
-            http: GET service2/product?id=2 200
+            http: GET http://localhost:8080/service2/product?id=2 200
             delay: 50ms to 200ms
         - call:
-            http: GET service2/product?id=3 200
+            http: GET http://localhost:8080/service2/product?id=3 200
             delay: 50ms to 200ms
         - call:
-            http: GET service2/product?id=4 200
+            http: GET http://localhost:8080/service2/product?id=4 200
             delay: 50ms to 200ms
-    - delay: 10 to 20ms
+    - delay: 10ms to 20ms
 - delay: 
     min: 100ms
     max: 200ms
 - call:
-    http: GET service5/something 200
+    http: GET http://localhost:8080/service5/something 200
     delay: 200ms

@@ -17,9 +17,11 @@ FROM pre-build as build
 RUN go build ./...
 RUN go test -v ./...
 RUN go build -o bin/caller-server cmd/server/*.go
+RUN go build -o bin/caller-client cmd/client/*.go
 
 # final exported image
 FROM base
 WORKDIR /app
-COPY --from=build /app/bin/caller-server .
-ENTRYPOINT /app/caller-server
+COPY --from=build /app/bin/caller-server server
+COPY --from=build /app/bin/caller-client client
+ENTRYPOINT ["/app/server"]

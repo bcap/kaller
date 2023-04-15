@@ -18,6 +18,8 @@ import (
 )
 
 type Handler struct {
+	BaseContext context.Context
+
 	requestsHandled     int64
 	requestsOutstanding int32
 
@@ -25,6 +27,12 @@ type Handler struct {
 	testCaptureAccessLog bool
 	testAccessLog        []string
 	testAccessLogMutex   sync.Mutex
+}
+
+func New(ctx context.Context) *Handler {
+	return &Handler{
+		BaseContext: ctx,
+	}
 }
 
 type handler struct {
@@ -71,9 +79,9 @@ func (h *Handler) Handled() int64 {
 func (h *handler) Handle() {
 	h.RequestedAt = time.Now()
 
-	if h.Context == nil {
-		h.Context = context.Background()
-	}
+	var cancel context.CancelFunc
+	h.Context, cancel = context.WithCancel(h.BaseContext)
+	defer cancel()
 
 	reqBodyBytes, err := io.ReadAll(h.Request.Body)
 	if err != nil {

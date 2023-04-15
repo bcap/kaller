@@ -2,10 +2,7 @@ package main
 
 import (
 	"context"
-	"errors"
 	"log"
-	"net"
-	"net/http"
 	"os"
 	"time"
 
@@ -13,11 +10,11 @@ import (
 
 	"github.com/bcap/caller/cmd"
 	"github.com/bcap/caller/handler"
+	srv "github.com/bcap/caller/server"
 )
 
 type Args struct {
-	ListenAddress     string        `arg:"-l,--listen,env:LISTEN_ADDRESS" default:":8080" help:"Which address to listen to"`
-	ReadHeaderTimeout time.Duration `arg:"--read-header-timeout,env:READ_HEADER_TIMEOUT" default:"1s" help:"Once a client opens a connection with the server, how long to wait for request headers to be fully received"`
+	ListenAddress string `arg:"-l,--listen,env:LISTEN_ADDRESS" default:":8080" help:"Which address to listen to"`
 }
 
 func main() {
@@ -28,30 +25,23 @@ func main() {
 
 	args := parseArgs()
 
-	server := http.Server{
-		Addr:              args.ListenAddress,
-		Handler:           &handler.Handler{},
-		ReadHeaderTimeout: args.ReadHeaderTimeout,
-		BaseContext:       func(net.Listener) context.Context { return ctx },
-	}
-
-	listener, err := net.Listen("tcp", args.ListenAddress)
+	server := srv.Server{}
+	addr, err := server.Listen(ctx, args.ListenAddress)
 	cmd.PanicOnErr(err)
 
-	log.Printf("Caller server running with pid %v and listening on %v", os.Getpid(), args.ListenAddress)
+	log.Printf("Caller server running with pid %v and listening on %v", os.Getpid(), addr.AddrPort())
 
-	onInterrupt := func(signal os.Signal) {
-		log.Println("Caller server interrupted, shutting down")
-		cancel()
-		shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 1*time.Second)
-		defer shutdownCancel()
-		server.Shutdown(shutdownCtx)
-	}
+	cmd.InstallSignalHandler(
+		func(signal os.Signal) {
+			log.Println("Caller server interrupted, shutting down")
+			cancel()
+			server.ShutdownWithTimeout(1 * time.Second)
+		},
+		os.Interrupt,
+	)
 
-	cmd.InstallSignalHandler(onInterrupt, os.Interrupt)
-
-	err = server.Serve(listener)
-	if !(errors.Is(err, context.Canceled) || errors.Is(err, http.ErrServerClosed)) {
+	err = server.Serve(handler.New(ctx))
+	if !srv.IsClosedError(err) {
 		cmd.PanicOnErr(err)
 	}
 	log.Println("Caller server succesfully shutdown")

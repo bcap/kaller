@@ -12,6 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	ptype "github.com/bcap/caller/plan"
+	"github.com/bcap/caller/server"
 )
 
 var plan1 = `
@@ -117,26 +118,25 @@ func assertInLog(t *testing.T, accessLog []string, msg string, times int) {
 
 func launchServer(t *testing.T) (context.Context, context.CancelFunc, *Handler, *net.TCPAddr) {
 	ctx, cancel := context.WithCancel(context.Background())
-	handler := Handler{testCaptureAccessLog: true}
-	server := http.Server{
-		Handler:     &handler,
-		BaseContext: func(net.Listener) context.Context { return ctx },
-	}
-
-	var lc net.ListenConfig
-	listener, err := lc.Listen(ctx, "tcp", ":0")
+	handler := New(ctx)
+	handler.testCaptureAccessLog = true
+	srv := server.Server{}
+	addr, err := srv.Listen(ctx, ":0")
 	require.NoError(t, err)
 	go func() {
-		server.Serve(listener)
+		err := srv.Serve(handler)
+		if !server.IsClosedError(err) {
+			assert.Fail(t, "server exit error: %v", err)
+		}
 	}()
 	go func() {
 		<-ctx.Done()
 		shutdownCtx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 		defer cancel()
-		server.Shutdown(shutdownCtx)
+		srv.Shutdown(shutdownCtx)
 	}()
 
-	return ctx, cancel, &handler, listener.Addr().(*net.TCPAddr)
+	return ctx, cancel, handler, addr
 }
 
 func execPlan(t *testing.T, ctx context.Context, handler *Handler, addr *net.TCPAddr, planString string) {

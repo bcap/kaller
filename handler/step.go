@@ -3,9 +3,7 @@ package handler
 import (
 	"bytes"
 	"log"
-	"math/rand"
 	"net/http"
-	"time"
 
 	ptype "github.com/bcap/caller/plan"
 	"github.com/bcap/caller/random"
@@ -25,24 +23,8 @@ func (h *handler) loop(loop ptype.Loop, location string) error {
 	return nil
 }
 
-var delayRand = rand.New(rand.NewSource(time.Now().UnixNano()))
-
 func (h *handler) delay(delay ptype.Delay) error {
-	if err := delay.Validate(); err != nil {
-		return err
-	}
-	if delay.IsZero() {
-		return nil
-	}
-	sleep := delay.Min
-	if delay.Min < delay.Max {
-		delta := int64(delay.Max - delay.Min)
-		sleep = delay.Min + time.Duration(delayRand.Int63n(delta))
-	}
-	select {
-	case <-time.After(sleep):
-	case <-h.Context.Done():
-	}
+	delay.Do(h.Context)
 	return nil
 }
 

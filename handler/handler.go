@@ -12,6 +12,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/bcap/caller/memory"
 	ptype "github.com/bcap/caller/plan"
 	"github.com/bcap/caller/random"
 	syncx "github.com/bcap/caller/sync"
@@ -51,6 +52,8 @@ type handler struct {
 	Plan        ptype.Plan
 	RequestedAt time.Time
 	RespondedAt time.Time
+
+	Fill memory.Fill
 
 	pendingAsyncCalls syncx.WaitGroup
 }
@@ -111,7 +114,7 @@ func (h *handler) Handle() {
 		return
 	}
 
-	h.delay(call.Delay)
+	h.compute(call.Compute)
 
 	defer h.waitAsyncCalls()
 

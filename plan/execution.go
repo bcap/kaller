@@ -23,8 +23,8 @@ func (e *Execution) UnmarshalYAML(node *yaml.Node) error {
 		var step Step
 		stepType := StepType(node.Content[0].Value)
 		switch stepType {
-		case StepTypeDelay:
-			step = &Delay{}
+		case StepTypeCompute:
+			step = &Compute{}
 		case StepTypeCall:
 			step = &Call{}
 		case StepTypeParallel:
@@ -41,7 +41,7 @@ func (e *Execution) UnmarshalYAML(node *yaml.Node) error {
 			//   execution:
 			//   - call:
 			//     http: GET something 200
-			//     delay: 10ms
+			//     compute: 10ms
 			if err := node.Decode(step); err != nil {
 				return err
 			}
@@ -50,7 +50,7 @@ func (e *Execution) UnmarshalYAML(node *yaml.Node) error {
 			//   execution:
 			//   - call:
 			//       http: GET something 200
-			//       delay: 10ms
+			//       compute: 10ms
 			if err := node.Content[1].Decode(step); err != nil {
 				return err
 			}
@@ -76,8 +76,8 @@ func (e *Execution) UnmarshalJSON(data []byte) error {
 			var step Step
 			stepType := StepType(stepType)
 			switch stepType {
-			case StepTypeDelay:
-				step = &Delay{}
+			case StepTypeCompute:
+				step = &Compute{}
 			case StepTypeCall:
 				step = &Call{}
 			case StepTypeParallel:

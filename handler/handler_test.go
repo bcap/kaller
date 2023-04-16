@@ -22,11 +22,11 @@ execution:
   execution:
   - call:
     http: GET {{addr}}/service2 200 0 1024
-    delay: 100ms
+    compute: 100ms
   post-execution:
   - call:
     http: POST {{addr}}/service3 200 1024 10240
-    delay: 100ms
+    compute: 100ms
 `
 
 func TestHandlerPlan1(t *testing.T) {
@@ -47,38 +47,38 @@ var plan2 = `
 execution:
 - call:
   http: POST {{addr}}/service4/login 200 1024 2048
-  delay: 100ms to 200ms
+  compute: 100ms to 200ms
 - call:
   http: GET {{addr}}/service1/listing 200 0 10240
   execution:
-  - delay: 100ms to 200ms
+  - compute: 100ms to 200ms
   - parallel:
     concurrency: 2
     execution:
     - call:
       http: GET {{addr}}/service2/product?id=1 200 0 1024
-      delay: 500ms
+      compute: 500ms
     - loop:
       times: 3
-      delay: 20ms
+      compute: 20ms
       execution:
       - call:
         http: GET {{addr}}/service2/product?id=2 404 0 1024
-        delay: 50ms
+        compute: 50ms
     - call:
       http: GET {{addr}}/service2/product?id=3 200 0 1024
-      delay: 500ms
+      compute: 500ms
     - call:
       http: GET {{addr}}/service2/product?id=4 200 0 1024
-      delay: 500ms
+      compute: 500ms
     - call:
       async: true
       http: POST {{addr}}/service4/viewed 200 1024 2048
-      delay: 2000ms
+      compute: 2000ms
   post-execution:
   - call:
     http: POST {{addr}}/service3/metrics 200 1024 10240
-    delay: 100ms
+    compute: 100ms
 `
 
 func TestHandlerPlan2(t *testing.T) {

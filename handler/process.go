@@ -62,8 +62,8 @@ func (h *handler) processStep(stepIdx int, step ptype.Step, location string) err
 		err = h.parallel(*v, nextLocation())
 	case *ptype.Loop:
 		err = h.loop(*v, nextLocation())
-	case *ptype.Delay:
-		err = h.delay(*v)
+	case *ptype.Compute:
+		err = h.compute(*v)
 	case *ptype.Call:
 		err = h.call(*v, nextLocation())
 	default:

@@ -14,36 +14,36 @@ var indentRegular = `
 execution:
 - call:
     http: GET service1/listing 200 0 10240
-    delay: 100ms to 200ms
+    compute: 100ms to 200ms
     execution:
-    - delay:
+    - compute:
         min: 100ms
         max: 200ms
     - call:
         http: GET service2/product 200 0 1024
-        delay: 150ms
-- delay:
+        compute: 150ms
+- compute:
     min: 150ms
     max: 250ms
-- delay: 10ms
+- compute: 10ms
 `
 
 var indentShorter = `
 execution:
 - call:
   http: GET service1/listing 200 0 10240
-  delay: 100ms to 200ms
+  compute: 100ms to 200ms
   execution:
-  - delay:
+  - compute:
     min: 100ms
     max: 200ms
   - call:
     http: GET service2/product 200 0 1024
-    delay: 150ms
-- delay:
+    compute: 150ms
+- compute:
   min: 150ms
   max: 250ms
-- delay: 10ms
+- compute: 10ms
 `
 
 func TestDecodeYAMLIndent(t *testing.T) {
@@ -54,33 +54,34 @@ func TestDecodeYAMLIndent(t *testing.T) {
 
 var example1 string = `
 execution:
-- delay: 10ms 1.0 cpu                                       # 0
-- call:                                                     # 1
+- compute: 10ms 1.0 cpu                                    # 0
+- call:                                                    # 1
   http: GET service1/listing 200 0 10240
-  delay: 100ms to 200ms
+  compute: 100ms to 200ms
   execution:
-  - delay: 1ms to 5ms                                       # 1_0
-  - call:                                                   # 1_1
+  - compute: 1ms to 5ms                                    # 1_0
+  - call:                                                  # 1_1
     http: GET service3/profile?id=some_user 400 0 100
-  - parallel:                                               # 1_2
+  - parallel:                                              # 1_2
     concurrency: 2
     execution:
     - call:                                                # 1_2_0
       http: GET service2/product?id=1 200 0 1024
-      delay: 50ms to 200ms 1.2cpu
+      compute: 50ms to 200ms 1.2cpu +1mb
     - call:                                                # 1_2_1
       async: true
       http: GET service2/product?id=2 200 0 1024
-      delay: 51ms to 201ms 1.3 cpu
+      compute: 51ms to 201ms 1.3 cpu -100kb
     - loop:                                                # 1_2_2
       times: 2
-      delay: 10ms
+      compute: 10ms -200kb
       execution:
       - call:                                              # 1_2_2_0
         http: GET service2/product?id=3 502 0 1024
-        delay: 52ms to 202ms
-    - delay:                                               # 1_2_3
+        compute: 52ms to 202ms
+    - compute:                                             # 1_2_3
       min: 1s
+      memory-delta-kb: +10
     - call:                                                # 1_2_4
       http: 
         method: GET 
@@ -94,18 +95,18 @@ execution:
         response-headers:
           B: bar
           Content-Type: text/plain
-      delay: 53ms to 203ms
-  - delay: 10ms to 20ms                                    # 1_3
+      compute: 53ms to 203ms
+  - compute: 10ms to 20ms                                  # 1_3
   post-execution:
   - call:
     http: POST service5/metrics 201 2048 200               # 1_4
-    delay: 10ms to 20ms
-- delay:                                                   # 2
+    compute: 10ms to 20ms
+- compute:                                                 # 2
   min: 150ms
   max: 250ms
 - call:                                                    # 3
   http: POST service5/metrics 201 1024 100
-  delay: 10ms
+  compute: 10ms
 `
 
 func TestDecodeYAMLExample1(t *testing.T) {
@@ -114,10 +115,10 @@ func TestDecodeYAMLExample1(t *testing.T) {
 	execution := plan.Execution
 	assert.Equal(t, 4, len(execution))
 
-	delay_0 := execution[0].(*Delay)
+	compute_0 := execution[0].(*Compute)
 	assert.Equal(t,
-		&Delay{Min: 10 * time.Millisecond, Max: 10 * time.Millisecond, CPU: 1.0},
-		delay_0,
+		&Compute{Min: 10 * time.Millisecond, Max: 10 * time.Millisecond, CPU: 1.0},
+		compute_0,
 	)
 
 	call_1 := execution[1].(*Call)
@@ -132,16 +133,16 @@ func TestDecodeYAMLExample1(t *testing.T) {
 		call_1.HTTP,
 	)
 	assert.Equal(t,
-		Delay{Min: 100 * time.Millisecond, Max: 200 * time.Millisecond},
-		call_1.Delay,
+		Compute{Min: 100 * time.Millisecond, Max: 200 * time.Millisecond},
+		call_1.Compute,
 	)
 
 	assert.Equal(t, len(call_1.Execution), 4)
 
-	delay_1_0 := call_1.Execution[0].(*Delay)
+	compute_1_0 := call_1.Execution[0].(*Compute)
 	assert.Equal(t,
-		&Delay{Min: 1 * time.Millisecond, Max: 5 * time.Millisecond},
-		delay_1_0,
+		&Compute{Min: 1 * time.Millisecond, Max: 5 * time.Millisecond},
+		compute_1_0,
 	)
 
 	call_1_1 := call_1.Execution[1].(*Call)
@@ -157,8 +158,8 @@ func TestDecodeYAMLExample1(t *testing.T) {
 		call_1_1.HTTP,
 	)
 	assert.Equal(t,
-		Delay{Min: 0, Max: 0},
-		call_1_1.Delay,
+		Compute{Min: 0, Max: 0},
+		call_1_1.Compute,
 	)
 
 	parallel_1_2 := call_1.Execution[2].(*Parallel)
@@ -178,8 +179,8 @@ func TestDecodeYAMLExample1(t *testing.T) {
 		call_1_2_0.HTTP,
 	)
 	assert.Equal(t,
-		Delay{Min: 50 * time.Millisecond, Max: 200 * time.Millisecond, CPU: 1.2},
-		call_1_2_0.Delay,
+		Compute{Min: 50 * time.Millisecond, Max: 200 * time.Millisecond, CPU: 1.2, MemoryDeltaKB: 1024},
+		call_1_2_0.Compute,
 	)
 
 	call_1_2_1 := parallel_1_2.Execution[1].(*Call)
@@ -195,15 +196,15 @@ func TestDecodeYAMLExample1(t *testing.T) {
 		call_1_2_1.HTTP,
 	)
 	assert.Equal(t,
-		Delay{Min: 51 * time.Millisecond, Max: 201 * time.Millisecond, CPU: 1.3},
-		call_1_2_1.Delay,
+		Compute{Min: 51 * time.Millisecond, Max: 201 * time.Millisecond, CPU: 1.3, MemoryDeltaKB: -100},
+		call_1_2_1.Compute,
 	)
 
 	loop_1_2_2 := parallel_1_2.Execution[2].(*Loop)
 	assert.Equal(t, 2, loop_1_2_2.Times)
 	assert.Equal(t,
-		Delay{Min: 10 * time.Millisecond, Max: 10 * time.Millisecond},
-		loop_1_2_2.Delay,
+		Compute{Min: 10 * time.Millisecond, Max: 10 * time.Millisecond, MemoryDeltaKB: -200},
+		loop_1_2_2.Compute,
 	)
 
 	call_1_2_2_0 := loop_1_2_2.Execution[0].(*Call)
@@ -219,14 +220,14 @@ func TestDecodeYAMLExample1(t *testing.T) {
 		call_1_2_2_0.HTTP,
 	)
 	assert.Equal(t,
-		Delay{Min: 52 * time.Millisecond, Max: 202 * time.Millisecond},
-		call_1_2_2_0.Delay,
+		Compute{Min: 52 * time.Millisecond, Max: 202 * time.Millisecond},
+		call_1_2_2_0.Compute,
 	)
 
-	delay_1_2_3 := parallel_1_2.Execution[3].(*Delay)
+	compute_1_2_3 := parallel_1_2.Execution[3].(*Compute)
 	assert.Equal(t,
-		&Delay{Min: 1 * time.Second},
-		delay_1_2_3,
+		&Compute{Min: 1 * time.Second, MemoryDeltaKB: 10},
+		compute_1_2_3,
 	)
 
 	call_1_2_4 := parallel_1_2.Execution[4].(*Call)
@@ -250,14 +251,14 @@ func TestDecodeYAMLExample1(t *testing.T) {
 		call_1_2_4.HTTP,
 	)
 	assert.Equal(t,
-		Delay{Min: 53 * time.Millisecond, Max: 203 * time.Millisecond},
-		call_1_2_4.Delay,
+		Compute{Min: 53 * time.Millisecond, Max: 203 * time.Millisecond},
+		call_1_2_4.Compute,
 	)
 
-	delay_1_3 := call_1.Execution[3].(*Delay)
+	compute_1_3 := call_1.Execution[3].(*Compute)
 	assert.Equal(t,
-		&Delay{Min: 10 * time.Millisecond, Max: 20 * time.Millisecond},
-		delay_1_3,
+		&Compute{Min: 10 * time.Millisecond, Max: 20 * time.Millisecond},
+		compute_1_3,
 	)
 
 	call_1_4 := call_1.PostExecution[0].(*Call)
@@ -273,14 +274,14 @@ func TestDecodeYAMLExample1(t *testing.T) {
 		call_1_4.HTTP,
 	)
 	assert.Equal(t,
-		Delay{Min: 10 * time.Millisecond, Max: 20 * time.Millisecond},
-		call_1_4.Delay,
+		Compute{Min: 10 * time.Millisecond, Max: 20 * time.Millisecond},
+		call_1_4.Compute,
 	)
 
-	delay_2 := execution[2].(*Delay)
+	compute_2 := execution[2].(*Compute)
 	assert.Equal(t,
-		&Delay{Min: 150 * time.Millisecond, Max: 250 * time.Millisecond},
-		delay_2,
+		&Compute{Min: 150 * time.Millisecond, Max: 250 * time.Millisecond},
+		compute_2,
 	)
 }
 

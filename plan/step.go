@@ -10,7 +10,7 @@ type StepType string
 
 const (
 	StepTypeCall     StepType = "call"
-	StepTypeDelay    StepType = "delay"
+	StepTypeCompute    StepType = "compute"
 	StepTypeParallel StepType = "parallel"
 	StepTypeLoop     StepType = "loop"
 )

@@ -18,13 +18,13 @@ func (h *handler) loop(loop ptype.Loop, location string) error {
 		if err := h.processSteps(1, 0, loop.Execution, location); err != nil {
 			return err
 		}
-		h.delay(loop.Delay)
+		h.compute(loop.Compute)
 	}
 	return nil
 }
 
-func (h *handler) delay(delay ptype.Delay) error {
-	delay.Do(h.Context)
+func (h *handler) compute(compute ptype.Compute) error {
+	compute.Do(h.Context, &h.Fill)
 	return nil
 }
 

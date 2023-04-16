@@ -1,31 +1,32 @@
 execution:
-- delay: 10ms to 20ms
+- compute: 10ms to 20ms
 - call:
-    http: GET http://localhost:8080/service1/listing 200
-    delay: 100ms to 200ms
+  http: GET http://localhost:8080/service1/listing 200
+  execution:
+  - compute: 10ms to 50ms 0.3 cpu +5mb
+  - call:
+    http: GET http://localhost:8080/service3/profile?id=some_user 200
+    compute: 10ms to 50ms 1.0 cpu +1mb
+  - parallel:
+    concurrency: 2
     execution:
-    - delay: 10ms to 50ms
     - call:
-        http: GET http://localhost:8080/service3/profile?id=some_user 200
-    - parallel:
-        concurrency: 2
-        execution:
-        - call:
-            http: GET http://localhost:8080/service2/product?id=1 200
-            delay: 50ms to 200ms
-        - call:
-            http: GET http://localhost:8080/service2/product?id=2 200
-            delay: 50ms to 200ms
-        - call:
-            http: GET http://localhost:8080/service2/product?id=3 200
-            delay: 50ms to 200ms
-        - call:
-            http: GET http://localhost:8080/service2/product?id=4 200
-            delay: 50ms to 200ms
-    - delay: 10ms to 20ms
-- delay: 
-    min: 100ms
-    max: 200ms
+      http: GET http://localhost:8080/service2/product?id=1 200
+      compute: 50ms to 200ms 0.2 cpu +1mb
+    - call:
+      http: GET http://localhost:8080/service2/product?id=2 200
+      compute: 50ms to 200ms 0.2 cpu +1mb
+    - call:
+      http: GET http://localhost:8080/service2/product?id=3 200
+      compute: 50ms to 200ms 0.2 cpu +1mb
+    - call:
+      http: GET http://localhost:8080/service2/product?id=4 200
+      compute: 50ms to 200ms 0.2 cpu +1mb
+  - compute: 10ms to 20ms 0.2 cpu +1mb
+- compute:
+  min: 100ms
+  max: 200ms
+  cpu: 1.0
 - call:
-    http: GET http://localhost:8080/service5/something 200
-    delay: 200ms
+  http: GET http://localhost:8080/service5/something 200
+  compute: 200ms cpu 0.1 +1mb

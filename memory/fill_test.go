@@ -7,7 +7,7 @@ import (
 )
 
 func TestFill(t *testing.T) {
-	fill := Fill{}
+	fill := Fill{DebugPrintStats: true}
 	kb := 1024
 	mb := 1024 * kb
 

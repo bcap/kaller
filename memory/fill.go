@@ -15,10 +15,10 @@ const (
 
 var chunk []byte
 
-// If the memory fill is dealing with a large amount of data (> 100mb),
-// operations for both growing or shrinking it will also involve a
+// If the memory fill is dealing with a large amount of data (> 50mb),
+// operations for both growing or shrinking the Fill struct will also involve a
 // call to the garbage collector. This is to avoid high memory waste overall
-const gcThreshold = 100 * 1024 * 1024 // 100mb
+var GCThreshold = 50 * 1024 * 1024 // 50mb
 
 func init() {
 	chunk = make([]byte, 1024)
@@ -28,23 +28,23 @@ func init() {
 }
 
 type Fill struct {
+	DebugPrintStats bool
+
 	buf   []byte
 	mutex sync.RWMutex
 }
 
 func (m *Fill) Grow(bytes int) int {
-	var debug bool
-	_, debug = os.LookupEnv("DEBUG_MEMORY_FILL")
-	if debug {
+	if m.DebugPrintStats {
 		fmt.Fprintf(os.Stderr, "Before Fill.Grow(%s):\t", HumanizeBytesInt64(int64(bytes)))
 		PrintStats(os.Stderr)
 	}
 	newSize := m.grow(bytes)
 	oldSize := newSize - bytes
-	if oldSize > gcThreshold || newSize > gcThreshold {
+	if oldSize > GCThreshold || newSize > GCThreshold {
 		runtime.GC()
 	}
-	if debug {
+	if m.DebugPrintStats {
 		fmt.Fprintf(os.Stderr, "After  Fill.Grow(%s):\t", HumanizeBytesInt64(int64(bytes)))
 		PrintStats(os.Stderr)
 	}

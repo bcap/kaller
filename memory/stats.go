@@ -46,11 +46,16 @@ func HumanizeBytesUint64(bytes uint64) string {
 }
 
 func HumanizeBytesInt64(bytes int64) string {
+	var signal int64 = 1
+	if bytes < 0 {
+		signal = -1
+	}
+	bytes = bytes * signal
 	if bytes < int64(kb) {
-		return fmt.Sprintf("%db", bytes)
+		return fmt.Sprintf("%db", signal*bytes)
 	} else if bytes >= int64(kb) && bytes < int64(mb) {
-		return fmt.Sprintf("%dKb", bytes/int64(kb))
+		return fmt.Sprintf("%dKb", signal*bytes/int64(kb))
 	} else {
-		return fmt.Sprintf("%.02fMb", float64(bytes/int64(kb))/float64(kb))
+		return fmt.Sprintf("%.02fMb", float64(signal*bytes/int64(kb))/float64(kb))
 	}
 }

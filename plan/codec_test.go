@@ -83,10 +83,10 @@ execution:
       min: 1s
       memory-delta-kb: +10
     - call:                                                # 1_2_4
-      http: 
-        method: GET 
-        url: service2/product?id=4 
-        status-code: 200 
+      http:
+        method: GET
+        url: service2/product?id=4
+        status-code: 200
         gen-request-body: 0
         gen-response-body: 1024
         request-headers:
@@ -282,6 +282,67 @@ func TestDecodeYAMLExample1(t *testing.T) {
 	assert.Equal(t,
 		&Compute{Min: 150 * time.Millisecond, Max: 250 * time.Millisecond},
 		compute_2,
+	)
+}
+
+var withAnchors string = `
+anchors:
+- call: &call1
+    http: GET service1/listing 200 0 10240
+    compute: 100ms to 200ms 0.2 cpu +1mb
+- call: &call2
+    http: POST service2/metrics 200 1024 2048
+    compute: 50ms to 80ms 0.1cpu +100kb
+
+execution:
+- call: *call1
+- call: *call2
+`
+
+func TestDecodeYAMLWithAnchors(t *testing.T) {
+	plan := load(t, withAnchors)
+
+	execution := plan.Execution
+	require.Equal(t, 2, len(execution))
+
+	call_0 := execution[0].(*Call)
+	assert.Equal(t,
+		HTTP{
+			Method:          "GET",
+			URL:             MustParseURL("service1/listing"),
+			StatusCode:      200,
+			GenRequestBody:  0,
+			GenResponseBody: 10240,
+		},
+		call_0.HTTP,
+	)
+	assert.Equal(t,
+		Compute{
+			Min:           100 * time.Millisecond,
+			Max:           200 * time.Millisecond,
+			CPU:           0.2,
+			MemoryDeltaKB: 1024},
+		call_0.Compute,
+	)
+
+	call_1 := execution[1].(*Call)
+	assert.Equal(t,
+		HTTP{
+			Method:          "POST",
+			URL:             MustParseURL("service2/metrics"),
+			StatusCode:      200,
+			GenRequestBody:  1024,
+			GenResponseBody: 2048,
+		},
+		call_1.HTTP,
+	)
+	assert.Equal(t,
+		Compute{
+			Min:           50 * time.Millisecond,
+			Max:           80 * time.Millisecond,
+			CPU:           0.1,
+			MemoryDeltaKB: 100},
+		call_1.Compute,
 	)
 }
 

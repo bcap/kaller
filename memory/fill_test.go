@@ -11,24 +11,33 @@ func TestFill(t *testing.T) {
 	kb := 1024
 	mb := 1024 * kb
 
+	check := func(size int) {
+		assert.Equal(t, size, fill.Size())
+		for i := 0; i < len(fill.buf); i++ {
+			if fill.buf[i] != byte(i) {
+				assert.Equal(t, byte(i), fill.buf[i])
+			}
+		}
+	}
+
 	fill.Grow(kb)
-	assert.Equal(t, kb, fill.Size())
+	check(kb)
 
 	fill.Grow(mb)
-	assert.Equal(t, kb+mb, fill.Size())
+	check(kb + mb)
+
+	fill.Grow(50 * mb)
+	check(kb + mb + 50*mb)
 
 	fill.Grow(100 * mb)
-	assert.Equal(t, kb+mb+100*mb, fill.Size())
+	check(kb + mb + 50*mb + 100*mb)
 
-	fill.Grow(100 * mb)
-	assert.Equal(t, kb+mb+100*mb+100*mb, fill.Size())
-
-	fill.Grow(1024 * mb)
-	assert.Equal(t, kb+mb+100*mb+100*mb+1024*mb, fill.Size())
+	fill.Grow(150 * mb)
+	check(kb + mb + 50*mb + 100*mb + 150*mb)
 
 	fill.Grow(-100 * mb)
-	assert.Equal(t, kb+mb+100*mb+100*mb+1024*mb-100*mb, fill.Size())
+	check(kb + mb + 50*mb + 100*mb + 150*mb - 100*mb)
 
-	fill.Grow(-1024 * 2 * mb)
-	assert.Equal(t, 0, fill.Size())
+	fill.Grow(-10 * 1024 * mb)
+	check(0)
 }

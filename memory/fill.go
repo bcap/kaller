@@ -52,11 +52,11 @@ func (m *Fill) Grow(bytes int) int {
 }
 
 func (m *Fill) grow(bytes int) int {
+	if bytes == 0 {
+		return m.Size()
+	}
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
-	if bytes == 0 {
-		return len(m.buf)
-	}
 	newSize := len(m.buf) + bytes
 	if newSize <= 0 {
 		m.buf = make([]byte, 0)

@@ -29,7 +29,7 @@ const (
 type Call struct {
 	Async         bool      `json:"async" yaml:"async"`
 	HTTP          HTTP      `json:"http,omitempty" yaml:"http,omitempty"`
-	Compute         Compute   `json:"compute,omitempty" yaml:"compute,omitempty"`
+	Compute       Compute   `json:"compute,omitempty" yaml:"compute,omitempty"`
 	Execution     Execution `json:"execution,omitempty" yaml:"execution,omitempty"`
 	PostExecution Execution `json:"post-execution,omitempty" yaml:"post-execution,omitempty"`
 }

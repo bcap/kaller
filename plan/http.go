@@ -5,6 +5,7 @@ import (
 	"net/url"
 	"regexp"
 	"strconv"
+	"strings"
 
 	"gopkg.in/yaml.v3"
 )
@@ -49,9 +50,9 @@ var httpPattern = regexp.MustCompile(HTTPPattern)
 
 // Parses a string into an HTTP object. Examples:
 //   - Method, url and status code:
-//     GET /some/url?with=multiple&query=params 200
+//     GET some/url?with=multiple&query=params 200
 //   - Method, url, status code, request body size and response body size (both randomly generated):
-//     POST /some/url?with=multiple&query=params 200 500 1048
+//     POST some/url?with=multiple&query=params 200 500 1048
 func (h *HTTP) Parse(s string) error {
 	parts := httpPattern.FindStringSubmatch(s)
 	if parts == nil {
@@ -75,7 +76,11 @@ func (h *HTTP) Parse(s string) error {
 			return fmt.Errorf("cannot parse http definition %q: response body size is not an integer: %w", s, err)
 		}
 	}
-	url, err := url.Parse(parts[2])
+	urlString := parts[2]
+	if strings.Index(urlString, "http") != 0 {
+		urlString = "http://" + urlString
+	}
+	url, err := url.Parse(urlString)
 	if err != nil {
 		return fmt.Errorf("cannot parse http definition %q: malformed url: %w", s, err)
 	}

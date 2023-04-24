@@ -84,17 +84,17 @@ execution:
       memory-delta-kb: +10
     - call:                                                # 1_2_4
       http:
-        method: GET
-        url: service2/product?id=4
-        status-code: 200
-        gen-request-body: 0
+        method:            GET
+        url:               http://service2/product?id=4
+        status-code:       200
+        gen-request-body:  0
         gen-response-body: 1024
         request-headers:
-          A: foo
-          Accept: text/plain
+          A:               foo
+          Accept:          text/plain
         response-headers:
-          B: bar
-          Content-Type: text/plain
+          B:               bar
+          Content-Type:    text/plain
       compute: 53ms to 203ms
   - compute: 10ms to 20ms                                  # 1_3
   post-execution:
@@ -125,7 +125,7 @@ func TestDecodeYAMLExample1(t *testing.T) {
 	assert.Equal(t,
 		HTTP{
 			Method:          "GET",
-			URL:             MustParseURL("service1/listing"),
+			URL:             MustParseURL("http://service1/listing"),
 			StatusCode:      200,
 			GenRequestBody:  0,
 			GenResponseBody: 10240,
@@ -150,7 +150,7 @@ func TestDecodeYAMLExample1(t *testing.T) {
 	assert.Equal(t,
 		HTTP{
 			Method:          "GET",
-			URL:             MustParseURL("service3/profile?id=some_user"),
+			URL:             MustParseURL("http://service3/profile?id=some_user"),
 			StatusCode:      400,
 			GenRequestBody:  0,
 			GenResponseBody: 100,
@@ -171,7 +171,7 @@ func TestDecodeYAMLExample1(t *testing.T) {
 	assert.Equal(t,
 		HTTP{
 			Method:          "GET",
-			URL:             MustParseURL("service2/product?id=1"),
+			URL:             MustParseURL("http://service2/product?id=1"),
 			StatusCode:      200,
 			GenRequestBody:  0,
 			GenResponseBody: 1024,
@@ -188,7 +188,7 @@ func TestDecodeYAMLExample1(t *testing.T) {
 	assert.Equal(t,
 		HTTP{
 			Method:          "GET",
-			URL:             MustParseURL("service2/product?id=2"),
+			URL:             MustParseURL("http://service2/product?id=2"),
 			StatusCode:      200,
 			GenRequestBody:  0,
 			GenResponseBody: 1024,
@@ -212,7 +212,7 @@ func TestDecodeYAMLExample1(t *testing.T) {
 	assert.Equal(t,
 		HTTP{
 			Method:          "GET",
-			URL:             MustParseURL("service2/product?id=3"),
+			URL:             MustParseURL("http://service2/product?id=3"),
 			StatusCode:      502,
 			GenRequestBody:  0,
 			GenResponseBody: 1024,
@@ -235,7 +235,7 @@ func TestDecodeYAMLExample1(t *testing.T) {
 	assert.Equal(t,
 		HTTP{
 			Method:          "GET",
-			URL:             MustParseURL("service2/product?id=4"),
+			URL:             MustParseURL("http://service2/product?id=4"),
 			StatusCode:      200,
 			GenRequestBody:  0,
 			GenResponseBody: 1024,
@@ -266,7 +266,7 @@ func TestDecodeYAMLExample1(t *testing.T) {
 	assert.Equal(t,
 		HTTP{
 			Method:          "POST",
-			URL:             MustParseURL("service5/metrics"),
+			URL:             MustParseURL("http://service5/metrics"),
 			StatusCode:      201,
 			GenRequestBody:  2048,
 			GenResponseBody: 200,
@@ -309,7 +309,7 @@ func TestDecodeYAMLWithAnchors(t *testing.T) {
 	assert.Equal(t,
 		HTTP{
 			Method:          "GET",
-			URL:             MustParseURL("service1/listing"),
+			URL:             MustParseURL("http://service1/listing"),
 			StatusCode:      200,
 			GenRequestBody:  0,
 			GenResponseBody: 10240,
@@ -329,7 +329,7 @@ func TestDecodeYAMLWithAnchors(t *testing.T) {
 	assert.Equal(t,
 		HTTP{
 			Method:          "POST",
-			URL:             MustParseURL("service2/metrics"),
+			URL:             MustParseURL("http://service2/metrics"),
 			StatusCode:      200,
 			GenRequestBody:  1024,
 			GenResponseBody: 2048,

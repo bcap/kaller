@@ -1,10 +1,10 @@
 # base image for everything else
 FROM alpine as base
-RUN apk add go bash
+RUN apk add bash
 
 # image with everything ready to be built
 FROM base as pre-build
-RUN apk add build-base
+RUN apk add go build-base
 WORKDIR /app
 # cache deps
 COPY go.mod go.sum ./

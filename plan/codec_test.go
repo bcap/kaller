@@ -73,7 +73,8 @@ execution:
       http: GET service2/product?id=2 200 0 1024
       compute: 51ms to 201ms 1.3 cpu -100kb
     - loop:                                                # 1_2_2
-      times: 2
+      times: 5
+      concurrency: 2
       compute: 10ms -200kb
       execution:
       - call:                                              # 1_2_2_0
@@ -201,7 +202,8 @@ func TestDecodeYAMLExample1(t *testing.T) {
 	)
 
 	loop_1_2_2 := parallel_1_2.Execution[2].(*Loop)
-	assert.Equal(t, 2, loop_1_2_2.Times)
+	assert.Equal(t, 5, loop_1_2_2.Times)
+	assert.Equal(t, 2, loop_1_2_2.Concurrency)
 	assert.Equal(t,
 		Compute{Min: 10 * time.Millisecond, Max: 10 * time.Millisecond, MemoryDeltaKB: -200},
 		loop_1_2_2.Compute,

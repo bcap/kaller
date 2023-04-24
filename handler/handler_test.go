@@ -60,6 +60,7 @@ execution:
       compute: 500ms
     - loop:
       times: 3
+      concurrency: 2
       compute: 20ms
       execution:
       - call:

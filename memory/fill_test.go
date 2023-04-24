@@ -7,7 +7,8 @@ import (
 )
 
 func TestFill(t *testing.T) {
-	fill := Fill{DebugPrintStats: true}
+	fill := Fill{}
+	fill.DebugPrintStats(true)
 	kb := 1024
 	mb := 1024 * kb
 
@@ -20,24 +21,39 @@ func TestFill(t *testing.T) {
 		}
 	}
 
-	fill.Grow(kb)
+	fill.Add(kb)
 	check(kb)
 
-	fill.Grow(mb)
+	fill.Add(mb)
 	check(kb + mb)
 
-	fill.Grow(50 * mb)
+	fill.Add(50 * mb)
 	check(kb + mb + 50*mb)
 
-	fill.Grow(100 * mb)
+	fill.Add(100 * mb)
 	check(kb + mb + 50*mb + 100*mb)
 
-	fill.Grow(150 * mb)
+	fill.Add(150 * mb)
 	check(kb + mb + 50*mb + 100*mb + 150*mb)
 
-	fill.Grow(-100 * mb)
+	fill.Add(-100 * mb)
 	check(kb + mb + 50*mb + 100*mb + 150*mb - 100*mb)
 
-	fill.Grow(-10 * 1024 * mb)
+	fill.Add(-10 * 1024 * mb)
 	check(0)
+
+	fill.Set(-10)
+	check(0)
+
+	fill.Set(0)
+	check(0)
+
+	fill.Set(10 * mb)
+	check(10 * mb)
+
+	fill.Set(5 * mb)
+	check(5 * mb)
+
+	fill.Set(15 * mb)
+	check(15 * mb)
 }

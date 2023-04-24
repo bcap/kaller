@@ -89,7 +89,7 @@ func (d Compute) do(ctx context.Context, duration time.Duration, fill *memory.Fi
 
 func (d Compute) memory(fill *memory.Fill) {
 	if d.MemoryDeltaKB != 0 {
-		fill.Grow(d.MemoryDeltaKB * 1024)
+		fill.Add(d.MemoryDeltaKB * 1024)
 	}
 }
 

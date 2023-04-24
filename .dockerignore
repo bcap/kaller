@@ -3,4 +3,6 @@ Makefile
 README.md
 plan.yaml
 
+.git/
 .vscode/
+k8s/

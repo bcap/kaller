@@ -1,48 +1,52 @@
 execution:
-- call:
-  # port forwarded to kind cluster with `make kind-tunnel`
-  http: GET localhost:8080/run 200
+- loop:
+  times: 100
+  concurrency: 10
   execution:
-  - compute: 10ms to 20ms
   - call:
-    http: GET svc1/listing 200
+    # port forwarded to kind cluster with `make kind-tunnel`
+    http: GET localhost:8080/run 200
     execution:
-    - compute: 10ms to 50ms 0.3 cpu +5mb
+    - compute: 10ms to 20ms
     - call:
-      http: GET svc2/profile?id=some_user 200
-      compute: 10ms to 50ms 1.0 cpu +1mb
-    - parallel:
-      concurrency: 2
+      http: GET svc1/listing 200
       execution:
+      - compute: 10ms to 50ms 0.3 cpu +5mb
       - call:
-        http: GET svc3/product?id=1 200
-        compute: 50ms to 200ms 0.2 cpu +1mb
-      - call:
-        http: GET svc3/product?id=2 200
-        compute: 50ms to 200ms 0.2 cpu +1mb
-      - call:
-        http: GET svc3/product?id=3 200
-        compute: 50ms to 200ms 0.2 cpu +1mb
-      - call:
-        http: GET svc3/product?id=4 200
-        compute: 50ms to 200ms 0.2 cpu +1mb
-      - call:
-        http: GET svc3/product?id=5 404
-        compute: 5ms to 10ms 0.1 cpu
-      - call:
-        http: GET svc3/product?id=6 200
-        compute: 50ms to 200ms 0.2 cpu +1mb
-      - call:
-        http: GET svc3/product?id=7 200
-        compute: 50ms to 200ms 0.2 cpu +1mb
-      - call:
-        http: GET svc3/product?id=8 200
-        compute: 50ms to 200ms 0.2 cpu +1mb
-    - compute: 10ms to 20ms 0.2 cpu +1mb
-  - compute:
-    min: 100ms
-    max: 200ms
-    cpu: 1.0
-  - call:
-    http: GET svc1/something 200
-    compute: 200ms cpu 0.1 +1mb
+        http: GET svc2/profile?id=some_user 200
+        compute: 10ms to 50ms 1.0 cpu +1mb
+      - parallel:
+        concurrency: 2
+        execution:
+        - call:
+          http: GET svc3/product?id=1 200
+          compute: 50ms to 200ms 0.2 cpu +1mb
+        - call:
+          http: GET svc3/product?id=2 200
+          compute: 50ms to 200ms 0.2 cpu +1mb
+        - call:
+          http: GET svc3/product?id=3 200
+          compute: 50ms to 200ms 0.2 cpu +1mb
+        - call:
+          http: GET svc3/product?id=4 200
+          compute: 50ms to 200ms 0.2 cpu +1mb
+        - call:
+          http: GET svc3/product?id=5 404
+          compute: 5ms to 10ms 0.1 cpu
+        - call:
+          http: GET svc3/product?id=6 200
+          compute: 50ms to 200ms 0.2 cpu +1mb
+        - call:
+          http: GET svc3/product?id=7 200
+          compute: 50ms to 200ms 0.2 cpu +1mb
+        - call:
+          http: GET svc3/product?id=8 200
+          compute: 50ms to 200ms 0.2 cpu +1mb
+      - compute: 10ms to 20ms 0.2 cpu +1mb
+    - compute:
+      min: 100ms
+      max: 200ms
+      cpu: 1.0
+    - call:
+      http: GET svc1/something 200
+      compute: 200ms cpu 0.1 +1mb

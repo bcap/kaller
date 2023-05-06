@@ -24,4 +24,5 @@ FROM base
 WORKDIR /app
 COPY --from=build /app/bin/caller-server server
 COPY --from=build /app/bin/caller-client client
+COPY examples examples
 ENTRYPOINT ["/app/server"]

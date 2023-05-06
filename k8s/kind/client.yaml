@@ -1,0 +1,26 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: client
+spec:
+  completions: 1
+  backoffLimit: 0
+  template: 
+    metadata:
+      annotations:
+        sidecar.istio.io/inject: "false"
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: client
+        image: bcap/caller
+        command: ["/app/client", "/app/examples/plan.yaml"]
+        ports:
+        - containerPort: 8080
+        resources:
+          limits:
+            cpu: 500m
+            memory: 200Mi
+        # necessary, check notes at
+        # https://kind.sigs.k8s.io/docs/user/quick-start/#loading-an-image-into-your-cluster
+        imagePullPolicy: IfNotPresent

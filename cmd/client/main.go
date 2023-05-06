@@ -17,7 +17,8 @@ import (
 )
 
 type Args struct {
-	Plan string `arg:"positional,required" help:"The plan yaml file to use. Use \"-\" to read the plan from stdin"`
+	Plan    string `arg:"positional,required" help:"The plan yaml file to use. Use \"-\" to read the plan from stdin"`
+	Profile string `arg:"--profile" help:"Enables profiling for the given mode. Available modes at cmd/profile.go"`
 }
 
 func main() {
@@ -27,6 +28,10 @@ func main() {
 	cmd.ConfigureLogging()
 
 	args := parseArgs()
+
+	if args.Profile != "" {
+		defer cmd.ProfileStart(args.Profile).Stop()
+	}
 
 	server := srv.Server{}
 	addr, err := server.Listen(ctx, ":0")

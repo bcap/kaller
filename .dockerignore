@@ -1,7 +1,8 @@
 Dockerfile
 Makefile
 README.md
-plan.yaml
+
+*.pprof
 
 .git/
 .vscode/

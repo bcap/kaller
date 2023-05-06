@@ -12,7 +12,7 @@ build:
 	docker build -t ${IMAGE}:latest .
 
 run-client-bare:
-	go run cmd/client/main.go plan.yaml
+	go run cmd/client/main.go examples/plan.yaml
 
 run-server-bare:
 	go run cmd/server/main.go $(args)

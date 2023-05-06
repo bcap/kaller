@@ -1,0 +1,17 @@
+execution:
+- loop:
+  times: 20
+  concurrency: 5
+  execution:
+  - call:
+    # port forwarded to kind cluster with `make kind-tunnel`
+    http: GET localhost:8080/run 200
+    execution:
+    - compute: 10ms
+    - call:
+      http: GET svc1/listing 200
+      execution:
+      - compute: 10ms
+      - call:
+        http: GET svc2/profile?id=some_user 200
+        compute: 1000ms

@@ -55,6 +55,9 @@ kind-use-metallb:
 	${KUBECTL_NO_NS} --namespace=metallb-system wait deployment --for=condition=available --selector=component=controller --timeout=60s
 	${KUBECTL_NO_NS} apply -f k8s/kind/loadbalancer-02.yaml
 
+kind-fresh: kind-cluster-delete kind-cluster-create kind-use-istio kind-deploy kind-wait-pods-ready
+	${KUBECTL_NO_NS} get pods -A
+
 kind-load-image: build
 	${KIND} load docker-image ${IMAGE}:latest
 

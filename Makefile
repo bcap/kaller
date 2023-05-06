@@ -5,6 +5,7 @@ KIND_NAMESPACE=default
 KIND=kind --name ${KIND_CLUSTER}
 KUBECTL_NO_NS=kubectl --context kind-${KIND_CLUSTER}
 KUBECTL=${KUBECTL_NO_NS} --namespace ${KIND_NAMESPACE}
+ISTIOCTL=istioctl --context kind-${KIND_CLUSTER}
 
 .DEFAULT_GOAL=build
 
@@ -33,11 +34,26 @@ shellb:
 
 kind-cluster-create:
 	${KIND} create cluster --config k8s/kind/cluster.yaml
-	${KUBECTL_NO_NS} apply -f k8s/kind/loadbalancer.yaml
-	${KUBECTL_NO_NS} wait --namespace=metallb-system deployment --for=condition=available --selector=app=metallb --timeout=60s
 
 kind-cluster-delete:
 	${KIND} delete cluster
+
+kind-use-istio:
+	${ISTIOCTL} install --set profile=demo --skip-confirmation
+	${KUBECTL_NO_NS} label namespace default istio-injection=enabled
+	${KUBECTL_NO_NS} apply -f https://raw.githubusercontent.com/istio/istio/release-1.17/samples/addons/kiali.yaml
+	${KUBECTL_NO_NS} apply -f https://raw.githubusercontent.com/istio/istio/release-1.17/samples/addons/prometheus.yaml
+	${KUBECTL_NO_NS} apply -f https://raw.githubusercontent.com/istio/istio/release-1.17/samples/addons/grafana.yaml
+	${KUBECTL_NO_NS} apply -f https://raw.githubusercontent.com/istio/istio/release-1.17/samples/addons/jaeger.yaml
+	${KUBECTL_NO_NS} --namespace=istio-system wait --for=condition=available deployment kiali --timeout=60s
+	${KUBECTL_NO_NS} --namespace=istio-system wait --for=condition=available deployment prometheus --timeout=60s
+	${KUBECTL_NO_NS} --namespace=istio-system wait --for=condition=available deployment grafana --timeout=60s
+	${KUBECTL_NO_NS} --namespace=istio-system wait --for=condition=available deployment jaeger --timeout=60s
+	
+kind-use-metallb:
+	${KUBECTL_NO_NS} apply -f k8s/kind/loadbalancer-01.yaml
+	${KUBECTL_NO_NS} --namespace=metallb-system wait deployment --for=condition=available --selector=component=controller --timeout=60s
+	${KUBECTL_NO_NS} apply -f k8s/kind/loadbalancer-02.yaml
 
 kind-load-image: build
 	${KIND} load docker-image ${IMAGE}:latest
@@ -55,7 +71,10 @@ kind-tunnel:
 	${KUBECTL} port-forward service/svc1 8080:80
 
 kind-log-tail:
-	stern --context kind-${KIND_CLUSTER} --namespace ${KIND_NAMESPACE} --since 10m --color=never --template '{{printf "%-21s %s\n" .PodName .Message}}' 'svc.*'
+	stern --context kind-${KIND_CLUSTER} --namespace ${KIND_NAMESPACE} --since 10m --color=never --template '{{printf "%-21s %s\n" .PodName .Message}}' '(client|svc).*'
 
 kind-htop:
 	docker exec -it ${KIND_CLUSTER}-control-plane /bin/bash -c 'apt-get update && apt install -y htop && htop'
+
+kind-shell:
+	${KUBECTL} run -it --rm --restart=Never --image alpine temporary-shell -- sh

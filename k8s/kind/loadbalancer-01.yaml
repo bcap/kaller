@@ -2016,24 +2016,3 @@ webhooks:
     resources:
     - l2advertisements
   sideEffects: None
-
----
-
-apiVersion: metallb.io/v1beta1
-kind: IPAddressPool
-metadata:
-  name: pool
-  namespace: metallb-system
-spec:
-  # addresses below needs to be within the docker network CIDR. To check the CIDR:
-  #   docker network inspect kind | jq -r '.[0].IPAM.Config[0].Subnet'
-  addresses:
-  - 172.18.250.1-172.19.255.250
-
----
-
-apiVersion: metallb.io/v1beta1
-kind: L2Advertisement
-metadata:
-  name: empty
-  namespace: metallb-system

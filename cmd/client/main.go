@@ -18,6 +18,7 @@ import (
 
 type Args struct {
 	Plan    string `arg:"positional,required" help:"The plan yaml file to use. Use \"-\" to read the plan from stdin"`
+	Port    int    `arg:"-p,--port" help:"control the tcp port for the localhost server that is used to execute the plan" default:"0"`
 	Profile string `arg:"--profile" help:"Enables profiling for the given mode. Available modes at cmd/profile.go"`
 }
 
@@ -34,7 +35,7 @@ func main() {
 	}
 
 	server := srv.Server{}
-	addr, err := server.Listen(ctx, ":0")
+	addr, err := server.Listen(ctx, fmt.Sprintf(":%d", args.Port))
 	cmd.PanicOnErr(err)
 
 	go func() {

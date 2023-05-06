@@ -19,9 +19,15 @@ func parseProfileMode(mode string) func(*profile.Profile) {
 	case "cpu":
 		return profile.CPUProfile
 	case "memHeap":
-		return profile.MemProfileHeap
+		return func(p *profile.Profile) {
+			profile.MemProfileRate(1)
+			profile.MemProfileHeap(p)
+		}
 	case "memAllocs":
-		return profile.MemProfileAllocs
+		return func(p *profile.Profile) {
+			profile.MemProfileRate(1)
+			profile.MemProfileAllocs(p)
+		}
 	case "goroutines":
 		return profile.GoroutineProfile
 	case "mutex":

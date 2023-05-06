@@ -88,7 +88,9 @@ func (h *handler) call(call ptype.Call, location string) error {
 		for key, value := range call.HTTP.RequestHeaders {
 			req.Header.Set(key, value)
 		}
-		if err := WritePlanHeaders(req, h.Plan, location); err != nil {
+		if h.EncodedPlan != nil {
+			WriteEncodedPlanHeaders(req, h.EncodedPlan, location)
+		} else if err := WritePlanHeaders(req, h.Plan, location); err != nil {
 			return err
 		}
 		WriteRequestTraceHeader(req, h.RequestID)

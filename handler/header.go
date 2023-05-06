@@ -16,34 +16,39 @@ const HeaderPlanEncoding = "X-caller-plan-encoding"
 const HeaderRequestTrace = "X-caller-request-trace"
 
 func WritePlanHeaders(req *http.Request, plan ptype.Plan, location string) error {
-	encodedPlan, encoding, err := EncodePlan(plan)
+	encodedPlan, err := EncodePlan(plan)
 	if err != nil {
 		return fmt.Errorf("cannot write plan headers: %w", err)
 	}
-	req.Header.Set(HeaderPlan, encodedPlan)
-	req.Header.Set(HeaderPlanEncoding, encoding)
-	req.Header.Set(HeaderLocation, location)
+	WriteEncodedPlanHeaders(req, encodedPlan, location)
 	return nil
 }
 
-func ReadPlanHeaders(req *http.Request) (ptype.Plan, string, error) {
-	encodedPlan := req.Header.Get(HeaderPlan)
-	plan, err := DecodePlan(encodedPlan, req.Header.Get(HeaderPlanEncoding))
-	if err != nil {
-		return ptype.Plan{}, "", fmt.Errorf("cannot read plan from headers: %w", err)
-	}
-	location := req.Header.Get(HeaderLocation)
-	return plan, location, nil
+func WriteEncodedPlanHeaders(req *http.Request, encodedPlan *EncodedPlan, location string) {
+	req.Header.Set(HeaderPlan, encodedPlan.Content)
+	req.Header.Set(HeaderPlanEncoding, encodedPlan.Encoding)
+	req.Header.Set(HeaderLocation, location)
 }
 
-func EncodePlan(plan ptype.Plan) (string, string, error) {
+func ReadPlanHeaders(req *http.Request) (ptype.Plan, *EncodedPlan, string, error) {
+	encodedPlan := req.Header.Get(HeaderPlan)
+	encoding := req.Header.Get(HeaderPlanEncoding)
+	plan, err := DecodePlan(encodedPlan, encoding)
+	if err != nil {
+		return ptype.Plan{}, nil, "", fmt.Errorf("cannot read plan from headers: %w", err)
+	}
+	location := req.Header.Get(HeaderLocation)
+	return plan, &EncodedPlan{Content: encodedPlan, Encoding: encoding}, location, nil
+}
+
+func EncodePlan(plan ptype.Plan) (*EncodedPlan, error) {
 	jsonBytes, err := plan.ToJSON()
 	if err != nil {
-		return "", "", err
+		return nil, err
 	}
 	encoded := make([]byte, base64.RawStdEncoding.EncodedLen(len(jsonBytes)))
 	base64.RawStdEncoding.Encode(encoded, jsonBytes)
-	return string(encoded), "json; base64/no-padding", nil
+	return &EncodedPlan{Content: string(encoded), Encoding: "json; base64/no-padding"}, nil
 }
 
 func DecodePlan(encodedPlan string, encoding string) (ptype.Plan, error) {

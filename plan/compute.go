@@ -83,8 +83,9 @@ func (d Compute) Do(ctx context.Context, fill *memory.Fill) {
 }
 
 func (d Compute) do(ctx context.Context, duration time.Duration, fill *memory.Fill) {
+	start := time.Now()
 	d.memory(fill)
-	d.compute(ctx, duration)
+	d.compute(ctx, duration-time.Since(start))
 }
 
 func (d Compute) memory(fill *memory.Fill) {
@@ -107,7 +108,7 @@ func (d Compute) compute(ctx context.Context, duration time.Duration) {
 			if ratio > 1.0 {
 				ratio = 1.0
 			}
-			workUnit := 100 * time.Millisecond
+			workUnit := 1 * time.Millisecond
 			if duration < workUnit {
 				workUnit = duration
 			}

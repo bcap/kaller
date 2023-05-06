@@ -49,13 +49,22 @@ type handler struct {
 	ResponseStatusCode int
 	ResponseBody       []byte
 
+	// Plan and its encoded (serialized) version.
+	// We keep the encoded plan in memory as well to avoid re-encoding the plan everytime a call is made
 	Plan        ptype.Plan
+	EncodedPlan *EncodedPlan
+
 	RequestedAt time.Time
 	RespondedAt time.Time
 
 	Fill memory.Fill
 
 	pendingAsyncCalls syncx.WaitGroup
+}
+
+type EncodedPlan struct {
+	Content  string
+	Encoding string
 }
 
 // Main HTTP handler
@@ -94,12 +103,13 @@ func (h *handler) Handle() {
 	h.RequestBody = reqBodyBytes
 	h.identifyRequest()
 
-	plan, location, err := ReadPlanHeaders(h.Request)
+	plan, encodedPlan, location, err := ReadPlanHeaders(h.Request)
 	if err != nil {
 		h.textResponse(400, "bad plan: %v", err)
 		return
 	}
 	h.Plan = plan
+	h.EncodedPlan = encodedPlan
 
 	h.logRequestIn(location)
 

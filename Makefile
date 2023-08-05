@@ -12,6 +12,12 @@ ISTIOCTL=istioctl --context kind-${KIND_CLUSTER}
 build:
 	docker build -t ${IMAGE}:latest .
 
+push: build
+	docker push ${IMAGE}:latest
+
+dive: build
+	dive ${IMAGE}:latest
+
 run-client-bare:
 	go run cmd/client/main.go examples/plan.yaml
 

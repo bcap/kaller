@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/bcap/caller/memory"
+	"github.com/bcap/kaller/memory"
 	"github.com/stretchr/testify/assert"
 )
 

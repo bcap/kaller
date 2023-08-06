@@ -16,13 +16,13 @@ COPY . .
 FROM pre-build as build
 RUN go build ./...
 RUN go test -v ./...
-RUN go build -o bin/caller-server cmd/server/*.go
-RUN go build -o bin/caller-client cmd/client/*.go
+RUN go build -o bin/kaller-server cmd/server/*.go
+RUN go build -o bin/kaller-client cmd/client/*.go
 
 # final exported image
 FROM base
 WORKDIR /app
-COPY --from=build /app/bin/caller-server server
-COPY --from=build /app/bin/caller-client client
+COPY --from=build /app/bin/kaller-server server
+COPY --from=build /app/bin/kaller-client client
 COPY examples examples
 ENTRYPOINT ["/app/server"]

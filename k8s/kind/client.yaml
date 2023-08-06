@@ -13,7 +13,7 @@ spec:
       restartPolicy: Never
       containers:
       - name: client
-        image: bcap/caller
+        image: bcap/kaller
         command: ["/app/client", "/app/examples/plan.yaml"]
         ports:
         - containerPort: 8080

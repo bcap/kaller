@@ -12,10 +12,10 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/bcap/caller/memory"
-	ptype "github.com/bcap/caller/plan"
-	"github.com/bcap/caller/random"
-	syncx "github.com/bcap/caller/sync"
+	"github.com/bcap/kaller/memory"
+	ptype "github.com/bcap/kaller/plan"
+	"github.com/bcap/kaller/random"
+	syncx "github.com/bcap/kaller/sync"
 )
 
 type Handler struct {

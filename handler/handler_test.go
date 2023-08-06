@@ -11,8 +11,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	ptype "github.com/bcap/caller/plan"
-	"github.com/bcap/caller/server"
+	ptype "github.com/bcap/kaller/plan"
+	"github.com/bcap/kaller/server"
 )
 
 var plan1 = `

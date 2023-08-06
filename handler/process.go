@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strconv"
 
-	ptype "github.com/bcap/caller/plan"
+	ptype "github.com/bcap/kaller/plan"
 	"golang.org/x/sync/errgroup"
 )
 

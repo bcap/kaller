@@ -8,7 +8,7 @@ import (
 )
 
 // Plan represents the whole configuration for this application. It defines the plan on
-// how callers should execute steps and call each other
+// how kallers should execute steps and call each other
 //
 // As of now the Plan is serialized and sent to all services that participate in the
 // call mesh. For more details on how this is transported check handler.WritePlanHeaders and

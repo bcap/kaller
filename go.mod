@@ -1,4 +1,4 @@
-module github.com/bcap/caller
+module github.com/bcap/kaller
 
 go 1.20
 

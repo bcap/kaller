@@ -8,9 +8,9 @@ import (
 
 	"github.com/alexflint/go-arg"
 
-	"github.com/bcap/caller/cmd"
-	"github.com/bcap/caller/handler"
-	srv "github.com/bcap/caller/server"
+	"github.com/bcap/kaller/cmd"
+	"github.com/bcap/kaller/handler"
+	srv "github.com/bcap/kaller/server"
 )
 
 type Args struct {

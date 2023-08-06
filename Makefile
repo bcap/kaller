@@ -1,5 +1,5 @@
-IMAGE=bcap/caller
-KIND_CLUSTER=caller
+IMAGE=bcap/kaller
+KIND_CLUSTER=kaller
 KIND_NAMESPACE=default
 
 KIND=kind --name ${KIND_CLUSTER}
@@ -68,10 +68,10 @@ kind-load-image: build
 	${KIND} load docker-image ${IMAGE}:latest
 
 kind-undeploy:
-	${KUBECTL} delete -f k8s/kind/caller.yaml
+	${KUBECTL} delete -f k8s/kind/kaller.yaml
 
 kind-deploy: kind-load-image
-	${KUBECTL} apply -f k8s/kind/caller.yaml
+	${KUBECTL} apply -f k8s/kind/kaller.yaml
 
 kind-wait-pods-ready:
 	${KUBECTL} wait pod --selector='app in (svc1,svc2,svc3)' --for=condition=ready --timeout=60s

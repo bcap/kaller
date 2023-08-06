@@ -10,10 +10,10 @@ import (
 
 	"github.com/alexflint/go-arg"
 
-	"github.com/bcap/caller/cmd"
-	"github.com/bcap/caller/handler"
-	"github.com/bcap/caller/plan"
-	srv "github.com/bcap/caller/server"
+	"github.com/bcap/kaller/cmd"
+	"github.com/bcap/kaller/handler"
+	"github.com/bcap/kaller/plan"
+	srv "github.com/bcap/kaller/server"
 )
 
 type Args struct {

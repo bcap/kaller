@@ -7,13 +7,13 @@ import (
 	"net/http"
 	"strings"
 
-	ptype "github.com/bcap/caller/plan"
+	ptype "github.com/bcap/kaller/plan"
 )
 
-const HeaderPlan = "X-caller-plan"
-const HeaderLocation = "X-caller-loc"
-const HeaderPlanEncoding = "X-caller-plan-encoding"
-const HeaderRequestTrace = "X-caller-request-trace"
+const HeaderPlan = "X-kaller-plan"
+const HeaderLocation = "X-kaller-loc"
+const HeaderPlanEncoding = "X-kaller-plan-encoding"
+const HeaderRequestTrace = "X-kaller-request-trace"
 
 func WritePlanHeaders(req *http.Request, plan ptype.Plan, location string) error {
 	encodedPlan, err := EncodePlan(plan)

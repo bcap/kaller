@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: svc1
-        image: bcap/caller
+        image: bcap/kaller
         ports:
         - containerPort: 8080
         resources:
@@ -62,7 +62,7 @@ spec:
     spec:
       containers:
       - name: svc2
-        image: bcap/caller
+        image: bcap/kaller
         ports:
         - containerPort: 8080
         resources:
@@ -108,7 +108,7 @@ spec:
     spec:
       containers:
       - name: svc3
-        image: bcap/caller
+        image: bcap/kaller
         ports:
         - containerPort: 8080
         resources:

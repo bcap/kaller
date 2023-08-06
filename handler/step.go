@@ -5,8 +5,8 @@ import (
 	"log"
 	"net/http"
 
-	ptype "github.com/bcap/caller/plan"
-	"github.com/bcap/caller/random"
+	ptype "github.com/bcap/kaller/plan"
+	"github.com/bcap/kaller/random"
 	"golang.org/x/sync/errgroup"
 )
 

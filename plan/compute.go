@@ -9,7 +9,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/bcap/caller/memory"
+	"github.com/bcap/kaller/memory"
 	"gopkg.in/yaml.v3"
 )
 
